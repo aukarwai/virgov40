@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>VIRGO V40 | Early Strike Mathematical Layer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<style>
+:root{--bg:#070807;--panel:#0f1512;--panel2:#121b16;--line:#223329;--text:#e9fff2;--muted:#8aa997;--green:#32f58a;--red:#ff5f6d;--amber:#f9cb5e;--blue:#6bb7ff;--violet:#c08cff;}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#14351f 0,#070807 38%,#030403 100%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;overflow-x:hidden}.wrap{width:100%;max-width:520px;margin:0 auto;padding:10px 10px 26px}.hero{border:1px solid #2e5b3e;background:linear-gradient(180deg,#122319,#0b110e);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 0 22px rgba(50,245,138,.12)}h1{font-size:20px;letter-spacing:.5px;margin:0 0 6px}.sub{font-size:12px;color:var(--muted);line-height:1.35}.price{display:flex;align-items:baseline;gap:8px;margin-top:10px}.px{font-size:30px;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums}.pill{font-size:11px;border:1px solid #31533d;border-radius:999px;padding:4px 8px;color:#b7ffd0;background:#0b1a10}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.card{border:1px solid var(--line);background:rgba(13,22,17,.9);border-radius:14px;padding:10px;min-height:64px}.card h2{font-size:11px;letter-spacing:.8px;color:#b7ffd0;margin:0 0 7px;text-transform:uppercase}.big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}.small{font-size:11px;color:var(--muted);line-height:1.3}.bar{height:7px;background:#18241d;border-radius:999px;overflow:hidden;margin-top:6px}.fill{height:100%;width:0;background:linear-gradient(90deg,#274b35,var(--green));transition:.2s}.section{margin-top:10px}.sectionTitle{font-size:12px;font-weight:800;color:#d9ffe5;margin:12px 2px 7px;letter-spacing:.5px}.table{width:100%;border-collapse:collapse;font-size:11px}.table th,.table td{border-bottom:1px solid #1e2e25;padding:6px 4px;text-align:left;vertical-align:top}.table th{color:#90caa6;font-weight:700}.tag{display:inline-block;border-radius:999px;padding:3px 6px;border:1px solid #33483a;background:#0b130f;font-size:10px;color:#c8ffda}.tag.long{border-color:#2f8052;color:#75ffad}.tag.short{border-color:#a8434b;color:#ff99a3}.tag.exec{border-color:#32f58a;background:#0e2a19;color:#7dffb3}.tag.wait{border-color:#78612c;color:#ffd46a}.tag.dead{border-color:#672f37;color:#ff818d}.tag.warn{border-color:#78612c;background:#201807;color:#ffd46a}.tag.stale{border-color:#784a2c;background:#201007;color:#ffb36a}.tag.win{border-color:#32f58a;background:#0e2a19;color:#7dffb3}.tag.fail{border-color:#ff5f6d;background:#251014;color:#ff9aa3}.tag.late{border-color:#f9cb5e;background:#201807;color:#ffd46a}.tag.pending{border-color:#6bb7ff;background:#071625;color:#9ad2ff}.tag.armed{border-color:#6bb7ff;background:#071625;color:#9ad2ff}.tag.strike{border-color:#c08cff;background:#1a0e27;color:#dfb7ff;box-shadow:0 0 10px rgba(192,140,255,.22)}.tag.aggressive{border-color:#32f58a;background:#0e2a19;color:#7dffb3;box-shadow:0 0 12px rgba(50,245,138,.24)}.nowrap{white-space:nowrap}.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.decision{font-weight:900;letter-spacing:.2px}.minirow{display:block;margin-top:2px}.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.btn{appearance:none;border:1px solid #37513f;background:#101a14;color:#eafff0;border-radius:12px;padding:10px 11px;font-weight:800;font-size:12px}.btn.primary{border-color:#2aa866;background:#0d2b19;color:#9dffc2}.btn.warn{border-color:#78612c;color:#ffd46a}.log{height:170px;overflow:auto;border:1px solid #1d2a22;background:#080d0a;border-radius:12px;padding:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:#aeeec1;white-space:pre-wrap}.footer{font-size:10px;color:#6d8f7b;line-height:1.35;margin-top:12px}.ok{color:var(--green)}.bad{color:var(--red)}.amber{color:var(--amber)}.blue{color:var(--blue)}
+.exportBox{display:none;margin-top:10px;border:1px solid #31533d;background:#07100b;border-radius:14px;padding:10px}.exportBox.show{display:block}.exportBox textarea{width:100%;height:180px;background:#050806;color:#caffd9;border:1px solid #213529;border-radius:10px;padding:8px;font:10px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace}.exportActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+</style>
+</head>
+<body><div class="wrap">
+<div class="hero">
+<h1>VIRGO V40 EARLY STRIKE MATHEMATICAL LAYER</h1>
+<div class="sub">Purpose: become early without becoming reckless. V40 inserts a mathematically scored ARMED WATCH → EARLY STRIKE layer before FULL EXECUTE, while preserving stale-kill, poison protection, exact Scout / Strike / Execute / Live prices, and separate post-signal outcomes.</div>
+<div class="price"><div class="px" id="price">—</div><span class="pill" id="feedState">CONNECTING</span></div>
+<div class="small" id="lastSeen">Waiting for live feed…</div>
+<div class="btns"><button class="btn primary" onclick="startAll()">Connect / Restart</button><button class="btn" id="exportBtn" onclick="exportEvidence(event)">Export Evidence</button><button class="btn warn" onclick="clearSession()">Clear Session</button></div>
+<div class="exportBox" id="exportBox"><div class="small" id="exportStatus">Evidence export ready.</div><textarea id="exportText" readonly></textarea><div class="exportActions"><button class="btn primary" id="downloadEvidenceBtn" type="button">Download JSON</button><button class="btn" id="shareEvidenceBtn" type="button">Share / Save</button><button class="btn" id="copyEvidenceBtn" type="button">Copy JSON</button><button class="btn warn" id="closeExportBtn" type="button">Close</button></div></div>
+</div>
+<div class="grid">
+ <div class="card"><h2>MYT 08:00 Survivors</h2><div class="big" id="survivorCount">0 / 4</div><div class="bar"><div class="fill" id="survivorBar"></div></div><div class="small">Minimum-four target requires 4 full EXECUTE survivors in the current MYT 08:00 cycle, not provisional fragments.</div></div>
+ <div class="card"><h2>Top Suspects Alive</h2><div class="big" id="suspectCount">0</div><div class="bar"><div class="fill" id="suspectBar"></div></div><div class="small">Top-20 suspect pool is staged; not all suspects are executable.</div></div>
+ <div class="card"><h2>Early Strikes Today</h2><div class="big" id="earlyStrikeCount">0</div><div class="bar"><div class="fill" id="earlyStrikeBar"></div></div><div class="small">Earlier tactical signals in the current MYT 08:00 cycle. They are measured separately from FULL EXECUTE.</div></div>
+ <div class="card"><h2>Active Early Strike</h2><div class="big" id="activeEarlyStrike">0</div><div class="small" id="activeEarlyDetail">No live strike.</div></div>
+ <div class="card"><h2>VIRGO Depth Authority</h2><div class="big" id="bookScore">—</div><div class="small" id="bookDetail">Waiting for BingX depth20</div></div>
+ <div class="card"><h2>Siphon Flow</h2><div class="big" id="flowScore">—</div><div class="small" id="flowDetail">Waiting for trades</div></div>
+ <div class="card"><h2>Outcome Pending</h2><div class="big" id="outcomePending">0</div><div class="small">EXECUTE survivors still waiting for +500 / -500 judgment.</div></div>
+ <div class="card"><h2>Best After Execute</h2><div class="big" id="bestAfterExecute">—</div><div class="small" id="bestAfterDetail">No EXECUTE yet.</div></div>
+</div>
+<div class="section"><div class="sectionTitle">V40 Early Strike Board — Scout / Strike / Execute / Live</div><table class="table"><thead><tr><th>#</th><th>Dir</th><th>Prices</th><th>Early Score</th><th>Action</th></tr></thead><tbody id="earlyStrikeBody"><tr><td colspan="5" class="small">No Early Strike yet.</td></tr></tbody></table></div>
+<div class="section"><div class="sectionTitle">V40 Early Strike Outcome Audit</div><table class="table"><thead><tr><th>#</th><th>Dir</th><th>After Strike</th><th>Outcome</th><th>Confirmation</th></tr></thead><tbody id="earlyOutcomeBody"><tr><td colspan="5" class="small">No Early Strike outcomes yet.</td></tr></tbody></table></div>
+<div class="section"><div class="sectionTitle">Independent Survivor Board — Entry / Execute / Live</div><table class="table"><thead><tr><th>#</th><th>Dir</th><th>Prices</th><th>Move</th><th>Action</th></tr></thead><tbody id="survivorBody"><tr><td colspan="5" class="small">No survivors yet.</td></tr></tbody></table></div>
+<div class="section"><div class="sectionTitle">V40 Full Execute Outcome Tracker</div><table class="table"><thead><tr><th>#</th><th>Dir</th><th>After EXECUTE</th><th>Outcome</th><th>Timing</th></tr></thead><tbody id="outcomeBody"><tr><td colspan="5" class="small">No EXECUTE outcomes yet.</td></tr></tbody></table></div>
+<div class="section"><div class="sectionTitle">Top-20 Suspect Board</div><table class="table"><thead><tr><th>#</th><th>Dir</th><th>Age</th><th>Stage</th><th>Evidence</th></tr></thead><tbody id="suspectBody"><tr><td colspan="5" class="small">No suspects yet.</td></tr></tbody></table></div>
+<div class="section"><div class="sectionTitle">Non-Survivor Taxonomy Counters</div><div class="grid"><div class="card"><h2>Duplicate Fragment</h2><div class="big" id="cDup">0</div></div><div class="card"><h2>No Runway</h2><div class="big" id="cRunway">0</div></div><div class="card"><h2>Late Exhaustion</h2><div class="big" id="cLate">0</div></div><div class="card"><h2>Depth / Flow Bait</h2><div class="big" id="cBait">0</div></div><div class="card"><h2>Stale Survivor Kill</h2><div class="big" id="cStale">0</div><div class="small">Age &gt; 79m cannot execute.</div></div></div></div>
+<div class="section"><div class="sectionTitle">Evidence Log</div><div class="log" id="log"></div></div>
+<div class="footer">VIRGO V40 is a live Early Strike evidence harness, not a promoted backtest engine. EARLY STRIKE is an earlier tactical candidate; FULL EXECUTE remains the strict survivor confirmation. Every early strike is independently judged after its own strike price.</div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   VIRGO V35 FEED + DEPTH AUTHORITY FIX
+   Price/trade feed stays isolated from the attached HADES vMaster stack:
+   BingX ticker → Binance ticker fallback → Binance REST pulse, Binance 1m
+   bootstrap, guardian watchdog, wake-on-foreground, and BingX @trade siphon.
+
+   Depth authority is isolated only from OMEN_BINGX_DEPTH_AUTHORITY:
+   BingX swap-market dataType 1000PEPE-USDT@depth20, depth parser, notional
+   imbalance, micro-lean, pressure, spread, and freshness guard. No OMEN UI,
+   no AU Kar Wai behaviour layer, no extra command logic imported.
+   ===================================================================== */
+const SYMBOL_BINANCE='1000pepeusdt';
+const BINGX_DEPTH_CHANNEL='1000PEPE-USDT@depth20';
+const POINT=1e-7, TARGET_POINTS=500, IMPACT_POINTS=100, SECOND_PUNCH_POINTS=75;
+const OUTCOME_TARGET_POINTS=500, OUTCOME_FAIL_POINTS=500, LATE_EXECUTE_MIN=60, CHASE_WARN_SCOUT_MOVE=175;
+const EARLY_STRIKE_MIN_SCORE=70, AGGRESSIVE_STRIKE_MIN_SCORE=85, ARMED_WATCH_MIN_SCORE=58;
+const EARLY_STRIKE_MAX_AGE_MIN=45, EARLY_STRIKE_BEST_AGE_MIN=30, EARLY_STRIKE_MAX_SCOUT_MOVE=175, EARLY_STRIKE_MIN_SCOUT_MOVE=20;
+const EARLY_OUTCOME_TARGET_POINTS=500, EARLY_OUTCOME_FAIL_POINTS=500, EARLY_OUTCOME_WINDOW_MIN=79;
+const CANDIDATE_EXPIRY_MIN=79, CANDIDATE_CAUTION_MIN=30;
+const MAX_CANDLES=5000;
+let price=null,lastTs=0,lastSource='—';
+let priceStream=[], candleMap=new Map(), candles=[];
+let wsA=null, wsB=null, bingxTries=0, binanceTries=0, lastLive=0, liveSource='—';
+let trades=[], candidates=[], earlyStrikes=[], survivors=[], evidence=[];
+let counters={duplicate:0,runway:0,late:0,bait:0,stale:0,targetHit:0,failedFirst:0,weakFollow:0,earlyStrike:0,earlyTargetHit:0,earlyFailedFirst:0,earlyWeak:0};
+let survivalPrev=null;
+let depthState=null,lastDepthAt=0; // VIRGO depth authority from BingX depth20
+let bingxSocketGeneration=0, lastBingxConnectAttempt=0, lastWakeAt=0;
+let depthSubscription={socketGen:0, subscribed:false, lastSubAt:0, count:0, reconnects:0};
+let SHEOL_STREAM_GUARDIAN={pulseTimer:null,watchdogTimer:null,heartbeatTimer:null,lastRescue:0,rescueCount:0,lastError:'NONE',lastRoute:'BOOT',lastMessageAt:0,autoReconnect:true};
+const SIPH={ws:null,buckets:new Map(),lastTradeAt:0,calV:[],calN:[],ratioV:1,ratioN:1,tries:0};
+function E(id){return document.getElementById(id)}
+function fmtPx(p){return (+p).toFixed(7)}
+function minuteKey(t){return Math.floor(t/60000)*60000}
+function mytDate(ts=Date.now()){
+  /* VIRGO trading day: MYT 08:00 -> next day 07:59.
+     At 00:07 MYT, this still belongs to the previous 08:00 cycle. */
+  return new Date(ts).toISOString().slice(0,10);
+}
+function nowIso(){return new Date().toISOString()}
+function pts(a,b){return (a-b)/POINT}
+function log(msg,obj){const row={ts:nowIso(),msg,...(obj||{})};evidence.push(row);const el=E('log');if(el)el.textContent=`${row.ts} ${msg}\n`+(el.textContent||'').slice(0,6000)}
+function setFeed(s){const el=E('feedState'); if(el)el.textContent=s}
+function setStatus(s){setFeed(String(s||'—').toUpperCase().slice(0,34))}
+function setSource(s){liveSource=s; lastSource=s}
+function updateLivePrice(px,src){price=+px;lastTs=Date.now();lastSource=src||liveSource||'HADES feed';const pEl=E('price');if(pEl)pEl.textContent=fmtPx(price);const lEl=E('lastSeen');if(lEl)lEl.textContent=`${lastSource} • ${new Date().toLocaleTimeString()} • MYT ${mytDate()} • ${candles.length} bars`;evaluateLive();render()}
+function updateCurrentCandle(px,t=Date.now()){
+  let k=minuteKey(t); let c=candleMap.get(k);
+  if(!c){c={t:k,o:px,h:px,l:px,c:px,v:0,n:0,tb:0,source:'live'}; candleMap.set(k,c); candles.push(c); candles.sort((a,b)=>a.t-b.t); if(candles.length>MAX_CANDLES){let old=candles.shift(); candleMap.delete(old.t)}}
+  else{c.h=Math.max(c.h,px); c.l=Math.min(c.l,px); c.c=px; c.source='live'}
+}
+function rebuildCandlesFromKlines(data){
+  candleMap.clear(); candles=[]; priceStream=[];
+  for(const c of data){let t=+c[0], o=+c[1], h=+c[2], l=+c[3], cl=+c[4]; if(!(cl>0))continue; let k=minuteKey(t); let obj={t:k,o,h,l,c:cl,v:+c[5]||0,n:+c[8]||0,tb:+c[9]||0,source:'bootstrap'}; candleMap.set(k,obj); candles.push(obj); priceStream.push({t:k+59000,px:cl})}
+  candles.sort((a,b)=>a.t-b.t); priceStream=priceStream.slice(-2000);
+}
+function pushPrice(px,hi,lo){
+  px=parseFloat(px); if(!(px>0))return; lastLive=Date.now(); priceStream.push({t:lastLive,px}); if(priceStream.length>3000)priceStream.shift(); updateCurrentCandle(px,lastLive); updateLivePrice(px,liveSource||'HADES feed');
+}
+async function gunzip(ab){
+  if(typeof ab==='string')return ab;
+  try{if(window.DecompressionStream){let s=new Blob([ab]).stream().pipeThrough(new DecompressionStream('gzip')); return new TextDecoder().decode(await new Response(s).arrayBuffer())}}catch(e){}
+  try{if(window.pako)return pako.inflate(new Uint8Array(ab),{to:'string'})}catch(e){}
+  try{if(window.pako)return pako.ungzip(new Uint8Array(ab),{to:'string'})}catch(e){}
+  return null;
+}
+function closeSockets(){
+  try{if(SHEOL_STREAM_GUARDIAN.heartbeatTimer)clearInterval(SHEOL_STREAM_GUARDIAN.heartbeatTimer)}catch(e){}
+  try{if(wsA){wsA.onclose=null;wsA.onerror=null;wsA.onmessage=null;wsA.close()}}catch(e){}
+  try{if(wsB){wsB.onclose=null;wsB.onerror=null;wsB.onmessage=null;wsB.close()}}catch(e){}
+  wsA=null; wsB=null; depthSubscription.subscribed=false; bingxSocketGeneration++;
+}
+function sheolSocketState(ws){return !ws?'NONE':ws.readyState===0?'CONNECTING':ws.readyState===1?'OPEN':ws.readyState===2?'CLOSING':'CLOSED'}
+function sheolStreamError(msg){SHEOL_STREAM_GUARDIAN.lastError=String(msg||'NONE').slice(0,120)}
+function sheolMarkRoute(route){SHEOL_STREAM_GUARDIAN.lastRoute=route; SHEOL_STREAM_GUARDIAN.lastMessageAt=Date.now()}
+function startSheolHeartbeat(ws,label){
+  try{if(SHEOL_STREAM_GUARDIAN.heartbeatTimer)clearInterval(SHEOL_STREAM_GUARDIAN.heartbeatTimer)}catch(e){}
+  SHEOL_STREAM_GUARDIAN.heartbeatTimer=setInterval(()=>{
+    const age=Date.now()-(lastLive||SHEOL_STREAM_GUARDIAN.lastMessageAt||0);
+    if(ws&&ws.readyState===1&&label==='BingX'){try{ws.send('Ping')}catch(e){sheolStreamError('heartbeat ping failed: '+e.message)}}
+    if(age>18000 && SHEOL_STREAM_GUARDIAN.autoReconnect){sheolStreamError(label+' silent '+Math.round(age/1000)+'s'); sheolStreamGuardianRescue('heartbeat silent')}
+  },6000);
+}
+async function sheolRestPulse(){
+  try{SHEOL_STREAM_GUARDIAN.lastRoute='REST_PULSE'; let r=await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=1000PEPEUSDT',{cache:'no-store'}); let m=await r.json(); let c=m.lastPrice||m.close||m.price, h=m.highPrice, l=m.lowPrice; if(c){setSource('VIRGO REST pulse'); setStatus('live · REST pulse'); pushPrice(c,h,l); sheolStreamError('NONE'); return true} sheolStreamError('REST pulse returned no price')}
+  catch(e){sheolStreamError('REST pulse failed: '+e.message)}
+  return false;
+}
+function startSheolRestPulse(){
+  if(SHEOL_STREAM_GUARDIAN.pulseTimer)clearInterval(SHEOL_STREAM_GUARDIAN.pulseTimer);
+  SHEOL_STREAM_GUARDIAN.pulseTimer=setInterval(()=>{const age=Date.now()-(lastLive||0); if(!lastLive || age>12000 || sheolSocketState(wsA)!=='OPEN') sheolRestPulse()},12000);
+}
+function sheolStreamGuardianRescue(reason){
+  const now=Date.now(); if(now-(SHEOL_STREAM_GUARDIAN.lastRescue||0)<5000)return; SHEOL_STREAM_GUARDIAN.lastRescue=now; SHEOL_STREAM_GUARDIAN.rescueCount++; setStatus('guardian rescue · '+reason); sheolRestPulse(); bingxTries=0; binanceTries=0; closeSockets(); setTimeout(()=>connectBingX(),600);
+}
+function startSheolStreamWatchdog(){
+  if(SHEOL_STREAM_GUARDIAN.watchdogTimer)clearInterval(SHEOL_STREAM_GUARDIAN.watchdogTimer);
+  SHEOL_STREAM_GUARDIAN.watchdogTimer=setInterval(()=>{const age=Date.now()-(lastLive||0); if(!lastLive)return; if(age>15000){setStatus('stale '+Math.round(age/1000)+'s · pulse'); sheolRestPulse()} if(age>30000){sheolStreamGuardianRescue('stale '+Math.round(age/1000)+'s')}},4000);
+}
+
+/* ================= VIRGO DEPTH AUTHORITY — isolated from OMEN BingX depth20 ================= */
+function extractVirgoDepthFrame(d){
+  const data=d&&d.data;
+  if(!data||typeof data!=='object')return null;
+  const bids=Array.isArray(data.bids)?data.bids:null;
+  const asks=Array.isArray(data.asks)?data.asks:null;
+  if(!bids||!asks)return null;
+  return {bids,asks,dataType:d.dataType||'',ts:Date.now()};
+}
+function parseDepthSide(side){
+  return (Array.isArray(side)?side:[]).map(x=>{
+    if(Array.isArray(x))return {p:parseFloat(x[0]),q:parseFloat(x[1])};
+    if(x&&typeof x==='object')return {p:parseFloat(x.price??x.p),q:parseFloat(x.qty??x.q??x.quantity)};
+    return {p:NaN,q:NaN};
+  }).filter(x=>x.p>0&&x.q>0);
+}
+function updateVirgoDepthAuthority(frame){
+  const bids=parseDepthSide(frame.bids).sort((a,b)=>b.p-a.p);
+  const asks=parseDepthSide(frame.asks).sort((a,b)=>a.p-b.p);
+  if(!bids.length||!asks.length)return;
+  const bestBid=bids[0], bestAsk=asks[0];
+  const bidNotional=bids.reduce((s,x)=>s+x.p*x.q,0);
+  const askNotional=asks.reduce((s,x)=>s+x.p*x.q,0);
+  const bidQty=bids.reduce((s,x)=>s+x.q,0);
+  const askQty=asks.reduce((s,x)=>s+x.q,0);
+  const mid=(bestBid.p+bestAsk.p)/2;
+  const spreadPts=(bestAsk.p-bestBid.p)/POINT;
+  const imbalance=(bidNotional-askNotional)/Math.max(1e-12,bidNotional+askNotional);
+  const qtyImbalance=(bidQty-askQty)/Math.max(1e-12,bidQty+askQty);
+  const micro=(bestAsk.p*bestBid.q + bestBid.p*bestAsk.q)/Math.max(1e-12,bestBid.q+bestAsk.q);
+  const microLeanPts=(micro-mid)/POINT;
+  const topBidShare=(bestBid.p*bestBid.q)/Math.max(1e-12,bidNotional);
+  const topAskShare=(bestAsk.p*bestAsk.q)/Math.max(1e-12,askNotional);
+  const concentration=Math.max(topBidShare,topAskShare);
+  const pressure=Math.max(0,Math.min(100,Math.abs(imbalance)*82 + Math.min(12,Math.max(0,spreadPts))*1.5 + concentration*18));
+  let lean='BALANCED';
+  if(imbalance>=0.08)lean='LONG';
+  else if(imbalance<=-0.08)lean='SHORT';
+  depthState={bids,asks,bidNotional,askNotional,bidQty,askQty,bestBid:bestBid.p,bestAsk:bestAsk.p,mid,spreadPts,imbalance,qtyImbalance,micro,microLeanPts,concentration,pressure,lean,dataType:frame.dataType,ts:frame.ts};
+  lastDepthAt=frame.ts||Date.now();
+}
+function depthAuthority(){
+  if(!depthState||!lastDepthAt)return null;
+  const ageSec=Math.floor((Date.now()-lastDepthAt)/1000);
+  return {...depthState,ageSec,stale:ageSec>20};
+}
+function depthAligned(dir,d){
+  if(!d||d.stale)return false;
+  if(dir==='LONG')return d.imbalance>0.035 || d.microLeanPts>1.5;
+  if(dir==='SHORT')return d.imbalance<-0.035 || d.microLeanPts<-1.5;
+  return false;
+}
+function depthOpposes(dir,d){
+  if(!d||d.stale)return false;
+  if(dir==='LONG')return d.imbalance<-0.09 && d.pressure>=45;
+  if(dir==='SHORT')return d.imbalance>0.09 && d.pressure>=45;
+  return false;
+}
+
+function connectBinance(){
+  if(binanceTries>=8){setStatus('price unavailable');return} binanceTries++;
+  let ws; try{ws=new WebSocket('wss://fstream.binance.com/ws/1000pepeusdt@ticker'); wsB=ws}catch(e){setStatus('binance blocked');return}
+  setSource('VIRGO Binance fallback'); setStatus('connecting Binance…'); sheolMarkRoute('BINANCE_WS_CONNECTING'); let timeout=setTimeout(()=>{try{ws.close()}catch(e){}},9000);
+  ws.onmessage=function(ev){let m; try{m=JSON.parse(ev.data)}catch(e){return} if(m&&m.c){clearTimeout(timeout); sheolMarkRoute('BINANCE_WS'); setStatus('live · Binance'); setSource('VIRGO Binance'); sheolStreamError('NONE'); pushPrice(m.c,m.h,m.l)}};
+  ws.onclose=function(){clearTimeout(timeout); if(Date.now()-lastLive>10000)setTimeout(connectBinance,1800)};
+  ws.onerror=function(){sheolStreamError('Binance WS error'); try{ws.close()}catch(e){}};
+}
+function connectBingX(){
+  const now=Date.now();
+  if(wsA && (wsA.readyState===0 || wsA.readyState===1)){
+    setStatus('BingX already active');
+    return;
+  }
+  if(now-lastBingxConnectAttempt<1200){
+    setStatus('BingX connect debounce');
+    return;
+  }
+  lastBingxConnectAttempt=now;
+  if(bingxTries>=4){connectBinance();return} bingxTries++;
+  const gen=++bingxSocketGeneration;
+  depthSubscription.subscribed=false;
+  let ws; try{ws=new WebSocket('wss://open-api-swap.bingx.com/swap-market'); wsA=ws; ws.binaryType='arraybuffer'}catch(e){connectBinance();return}
+  setSource('VIRGO BingX'); setStatus('connecting BingX…'); sheolMarkRoute('BINGX_WS_CONNECTING'); let timeout=setTimeout(()=>{try{ws.close()}catch(e){}},9000);
+  ws.onopen=function(){
+    if(wsA!==ws || gen!==bingxSocketGeneration)return;
+    sheolMarkRoute('BINGX_WS_OPEN'); startSheolHeartbeat(ws,'BingX');
+    try{
+      ws.send(JSON.stringify({id:'virgo-v37-ticker-'+gen,reqType:'sub',dataType:'1000PEPE-USDT@ticker'}));
+      ws.send(JSON.stringify({id:'virgo-v37-depth-'+gen,reqType:'sub',dataType:BINGX_DEPTH_CHANNEL}));
+      depthSubscription={socketGen:gen,subscribed:true,lastSubAt:Date.now(),count:(depthSubscription.count||0)+1,reconnects:Math.max(0,(depthSubscription.reconnects||0)+(depthSubscription.count?1:0))};
+      log('VIRGO depth authority subscribed',{channel:BINGX_DEPTH_CHANNEL,socketGen:gen,mode:'single-active-socket'});
+    }catch(e){sheolStreamError('BingX subscribe/depth failed: '+e.message)}
+  };
+  ws.onmessage=async function(ev){
+    if(wsA!==ws || gen!==bingxSocketGeneration)return;
+    let txt=await gunzip(ev.data); if(txt===null)return; if(txt==='Ping'){try{ws.send('Pong')}catch(e){} return}
+    let m; try{m=JSON.parse(txt)}catch(e){return}
+    if(m&&m.ping){try{ws.send(JSON.stringify({pong:m.ping}))}catch(e){} return}
+    const depthFrame=extractVirgoDepthFrame(m); if(depthFrame){updateVirgoDepthAuthority(depthFrame); sheolMarkRoute('BINGX_DEPTH20')}
+    if(m&&m.data){let d=m.data,c=d.c||d.lastPrice||d.close||d.p,h=d.h||d.highPrice,l=d.l||d.lowPrice; if(c){clearTimeout(timeout); sheolMarkRoute('BINGX_WS'); setStatus('live · BingX + depth'); setSource('VIRGO BingX'); sheolStreamError('NONE'); pushPrice(c,h,l)}}
+  };
+  ws.onclose=function(){clearTimeout(timeout); if(wsA===ws){wsA=null; depthSubscription.subscribed=false; if(Date.now()-lastLive>10000)setTimeout(connectBingX,1600)}};
+  ws.onerror=function(){sheolStreamError('BingX WS error'); try{ws.close()}catch(e){}};
+}
+async function bootstrapHistory(){
+  try{setStatus('loading 1m bootstrap…'); let r=await fetch('https://fapi.binance.com/fapi/v1/klines?symbol=1000PEPEUSDT&interval=1m&limit=900',{cache:'no-store'}); let data=await r.json(); if(Array.isArray(data)){rebuildCandlesFromKlines(data); if(candles.length){let last=candles[candles.length-1]; updateLivePrice(last.c,'VIRGO bootstrap'); setStatus('bootstrap loaded · opening feed'); log('bootstrap loaded',{bars:candles.length})}}}
+  catch(e){setStatus('bootstrap failed · opening feed'); log('bootstrap failed',{error:e.message})}
+}
+function sync(){bingxTries=0;binanceTries=0;lastLive=0;closeSockets();setStatus('syncing…');bootstrapHistory().finally(()=>{connectBingX(); startSheolRestPulse(); startSheolStreamWatchdog()})}
+function addTrade(p,q,isSell,tt){
+  const t=tt||Date.now(); trades.push({t,p:+p||price||0,q:+q||0,side:isSell?'SELL':'BUY'}); let cutoff=Date.now()-10*60*1000; while(trades.length&&trades[0].t<cutoff)trades.shift();
+  const k=minuteKey(t), c=candleMap.get(k); if(c){c.v+=(+q||0); c.n=(c.n||0)+1; if(!isSell)c.tb=(c.tb||0)+(+q||0)}
+}
+function siphBucket(k){let b=SIPH.buckets.get(k);if(!b){b={v:0,n:0,tb:0};SIPH.buckets.set(k,b); for(const kk of SIPH.buckets.keys())if(k-kk>15*60000)SIPH.buckets.delete(kk)}return b}
+function connectSiphon(){
+  let ws;try{ws=new WebSocket('wss://open-api-swap.bingx.com/swap-market');SIPH.ws=ws;ws.binaryType='arraybuffer'}catch(e){return}
+  ws.onopen=function(){SIPH.tries=0; try{ws.send(JSON.stringify({id:'virgo-v39-siphon-'+Date.now(),reqType:'sub',dataType:'1000PEPE-USDT@trade'}))}catch(e){}};
+  ws.onmessage=async function(ev){
+    let txt=(typeof ev.data==='string')?ev.data:await gunzip(ev.data); if(txt===null)return;
+    if(txt==='Ping'||(txt.includes&&txt.includes('Ping'))){try{ws.send(txt.replace('Ping','Pong'))}catch(e){}return}
+    let m;try{m=JSON.parse(txt)}catch(e){return} if(m&&m.ping){try{ws.send(JSON.stringify({pong:m.ping}))}catch(e){}return}
+    if(m&&m.data&&m.data.length>0){const now=Date.now();SIPH.lastTradeAt=now; for(const tr of m.data){const q=parseFloat(tr.q);if(!(q>0))continue; const tt=+tr.T||+tr.t||now; const b=siphBucket(minuteKey(tt)); b.v+=q;b.n+=1;if(!tr.m)b.tb+=q; addTrade(tr.p||tr.price||price,q,!!tr.m,tt)}}
+  };
+  ws.onclose=function(){SIPH.tries++;setTimeout(connectSiphon,Math.min(15000,1500*SIPH.tries))};
+  ws.onerror=function(){try{ws.close()}catch(e){}};
+}
+setInterval(()=>{const fresh=Date.now()-SIPH.lastTradeAt<20000; const b=SIPH.buckets.get(minuteKey(Date.now())); const extra=fresh?` · siphon ${b?b.n:0}tr`:''; if(lastLive&&Date.now()-lastLive<20000)setStatus((liveSource||'LIVE')+extra);},5000);
+function startAll(){setStatus('CONNECTING'); log('VIRGO V40 early strike mathematical layer start',{target:'min4 independent survivors',feed:'HADES price/trade stack + isolated BingX depth20 authority',rule:'ARMED WATCH >=58; EARLY STRIKE >=70 before 45m and <=175pt; FULL EXECUTE remains second-punch strict; V40 tracks strike and execute outcomes separately'}); sync(); try{if(SIPH.ws){SIPH.ws.onclose=null;SIPH.ws.close()}}catch(e){} SIPH.ws=null; SIPH.tries=0; connectSiphon()}
+function hadesWake(why){
+  const now=Date.now(); if(now-lastWakeAt<3000)return; lastWakeAt=now;
+  const age=Date.now()-(lastLive||0); setStatus('resyncing '+why+'…');
+  if(age>8000||sheolSocketState(wsA)!=='OPEN'){sheolRestPulse(); bingxTries=0; binanceTries=0; closeSockets(); setTimeout(()=>connectBingX(),300)}
+  if(Date.now()-SIPH.lastTradeAt>8000){try{if(SIPH.ws){SIPH.ws.onclose=null;SIPH.ws.close()}}catch(e){} SIPH.ws=null; SIPH.tries=0; connectSiphon()}
+}
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) hadesWake('return'); });
+window.addEventListener('focus',()=>hadesWake('focus'));
+window.addEventListener('pageshow',e=>{ if(e.persisted) hadesWake('restore'); });
+window.addEventListener('online',()=>hadesWake('network'));
+window.addEventListener('offline',()=>setStatus('offline'));
+/* ================= V34 SURVIVOR LOGIC — fed by HADES stack ================= */
+function recentCandles(n){return candles.slice(-n)}
+function flowMetrics(){let cutoff=Date.now()-90*1000, recent=trades.filter(x=>x.t>=cutoff);let buy=0,sell=0,nB=0,nS=0;for(let x of recent){if(x.side==='BUY'){buy+=x.q;nB++}else{sell+=x.q;nS++}}let total=buy+sell+1e-9;return {buy,sell,total,buyRatio:buy/total,sellRatio:sell/total,n:recent.length,nB,nS,flow:(buy-sell)/total}}
+function survivalMetrics(){
+  const f=flowMetrics(), arr=recentCandles(20), d=depthAuthority(); let ret=0, range=0, eff=0;
+  if(arr.length>=3){const first=arr[0].o,last=arr[arr.length-1].c,hi=Math.max(...arr.map(x=>x.h)),lo=Math.min(...arr.map(x=>x.l)); ret=pts(last,first); range=pts(hi,lo); eff=Math.abs(ret)/(range+1e-9)}
+  const depthImb=(d&&!d.stale)?d.imbalance:0;
+  const depthLean=(d&&!d.stale)?Math.tanh(d.microLeanPts/18):0;
+  const imb=Math.max(-1,Math.min(1,0.42*f.flow+0.25*Math.tanh(ret/300)+0.23*depthImb+0.10*depthLean));
+  const dImb=survivalPrev==null?0:imb-survivalPrev; survivalPrev=imb;
+  return {imb,dImb,total:f.total,ret,range,eff,depth:d,depthImb,depthLean};
+}
+function pathMetrics(){let arr=recentCandles(96);if(arr.length<20)return null;let first=arr[0].o,last=arr[arr.length-1].c;let hi=Math.max(...arr.map(x=>x.h));let lo=Math.min(...arr.map(x=>x.l));let ret=pts(last,first);let range=pts(hi,lo);let loc=(last-lo)/(hi-lo+1e-12);let eff=Math.abs(ret)/(range+1e-9);let absrets=[];for(let i=1;i<arr.length;i++)absrets.push(Math.abs(pts(arr[i].c,arr[i-1].c)));let mean=absrets.reduce((a,b)=>a+b,0)/(absrets.length||1);let entropy=Math.min(1,mean/(range/Math.max(1,arr.length)+1e-9));return{ret,range,loc,eff,entropy,hi,lo,last}}
+function makeScout(dir,reason,score){let id=`${Date.now()}_${dir}_${Math.random().toString(36).slice(2,6)}`;let c={id,dir,scoutTime:Date.now(),expiresAt:Date.now()+CANDIDATE_EXPIRY_MIN*60000,date:mytDate(),entry:price,stage:'SCOUT',score,reason,impact:false,second:false,siphon:false,survival:false,independent:false,poison:null,evidence:[]};candidates.push(c);log(`SCOUT ${dir}`,{id,price,reason,score})}
+
+function signedMoveFrom(dir,fromPx,toPx){return pts(toPx,fromPx)*(dir==='LONG'?1:-1)}
+function actionLabel(x){
+  const age=+(x.executeAgeMin||x.ageMin||0);
+  const scoutMove=+(x.executeMoveFromScoutPts!==undefined?x.executeMoveFromScoutPts:(x.moveFromScoutPts||x.movePts||0));
+  if(age>=70 || scoutMove>=CHASE_WARN_SCOUT_MOVE)return {text:'VALID BUT LATE · DO NOT CHASE',cls:'late'};
+  if(age>=LATE_EXECUTE_MIN || scoutMove>=125)return {text:'LATE CHASE WARNING',cls:'late'};
+  return {text:'FRESH EXECUTE',cls:'win'};
+}
+function outcomeStatusClass(st){return st==='TARGET_HIT'?'win':(st==='FAILED_FIRST'?'fail':(st==='WEAK_FOLLOW_THROUGH'?'late':'pending'))}
+function updateOutcome(x){
+  if(!x||!x.fullSurvivor||!price)return x;
+  if(!x.executeTime)x.executeTime=Date.now();
+  if(!x.executePrice){x.executePrice=price; x.executePriceInferred=true;}
+  x.livePrice=price;
+  x.moveFromScoutPts=signedMoveFrom(x.dir,x.entry,price);
+  x.moveFromExecutePts=signedMoveFrom(x.dir,x.executePrice,price);
+  if(x.maxFavorableAfterExecute==null)x.maxFavorableAfterExecute=Math.max(0,x.moveFromExecutePts);
+  if(x.maxAdverseAfterExecute==null)x.maxAdverseAfterExecute=Math.min(0,x.moveFromExecutePts);
+  if(x.moveFromExecutePts>x.maxFavorableAfterExecute){x.maxFavorableAfterExecute=x.moveFromExecutePts;x.maxFavorableAt=Date.now();}
+  if(x.moveFromExecutePts<x.maxAdverseAfterExecute){x.maxAdverseAfterExecute=x.moveFromExecutePts;x.maxAdverseAt=Date.now();}
+  x.minutesSinceExecute=(Date.now()-x.executeTime)/60000;
+  if(!x.outcomeStatus||x.outcomeStatus==='PENDING'){
+    if(x.maxFavorableAfterExecute>=OUTCOME_TARGET_POINTS){x.outcomeStatus='TARGET_HIT';x.outcomeAt=x.outcomeAt||Date.now(); if(!x.targetLogged){counters.targetHit=(counters.targetHit||0)+1;x.targetLogged=true;log(`TARGET HIT ${x.dir}`,{id:x.id,executePrice:x.executePrice,maxFavorableAfterExecute:+x.maxFavorableAfterExecute.toFixed(0),rule:'+500-after-execute'});}}
+    else if(x.maxAdverseAfterExecute<=-OUTCOME_FAIL_POINTS){x.outcomeStatus='FAILED_FIRST';x.outcomeAt=x.outcomeAt||Date.now(); if(!x.failLogged){counters.failedFirst=(counters.failedFirst||0)+1;x.failLogged=true;log(`FAILED FIRST ${x.dir}`,{id:x.id,executePrice:x.executePrice,maxAdverseAfterExecute:+x.maxAdverseAfterExecute.toFixed(0),rule:'-500-after-execute'});}}
+    else if(x.minutesSinceExecute>CANDIDATE_EXPIRY_MIN && x.maxFavorableAfterExecute<OUTCOME_TARGET_POINTS){x.outcomeStatus='WEAK_FOLLOW_THROUGH';x.outcomeAt=x.outcomeAt||Date.now(); if(!x.weakLogged){counters.weakFollow=(counters.weakFollow||0)+1;x.weakLogged=true;log(`WEAK FOLLOW-THROUGH ${x.dir}`,{id:x.id,executePrice:x.executePrice,maxFavorableAfterExecute:+x.maxFavorableAfterExecute.toFixed(0),minutesSinceExecute:+x.minutesSinceExecute.toFixed(1)});}}
+    else x.outcomeStatus='PENDING';
+  }
+  const a=actionLabel(x); x.actionLabel=a.text; x.actionClass=a.cls;
+  return x;
+}
+function updateAllOutcomes(){for(const x of survivors)updateOutcome(x)}
+function outcomeSummary(){
+  let pending=0,target=0,fail=0,weak=0,best=null;
+  for(const x of survivors){updateOutcome(x); if(x.outcomeStatus==='TARGET_HIT')target++; else if(x.outcomeStatus==='FAILED_FIRST')fail++; else if(x.outcomeStatus==='WEAK_FOLLOW_THROUGH')weak++; else pending++; if(!best || (x.maxFavorableAfterExecute||0)>(best.maxFavorableAfterExecute||0))best=x;}
+  return {pending,target,fail,weak,best};
+}
+
+
+function clamp01(v){return Math.max(0,Math.min(1,v))}
+function earlyStatusClass(st){return st==='TARGET_HIT'?'win':(st==='FAILED_FIRST'?'fail':(st==='WEAK_FOLLOW_THROUGH'?'late':'pending'))}
+function earlyActionLabel(x){
+  if(!x)return {text:'WAIT',cls:'wait'};
+  const age=+(x.strikeAgeMin||0), move=+(x.strikeMoveFromScoutPts||0), score=+(x.earlyScore||0);
+  if(age>30 || move>125)return {text:'EARLY STRIKE · CHASE CAUTION',cls:'late'};
+  if(score>=AGGRESSIVE_STRIKE_MIN_SCORE)return {text:'AGGRESSIVE EARLY STRIKE',cls:'aggressive'};
+  return {text:'EARLY STRIKE',cls:'strike'};
+}
+function earlyScoreModel(c,f,s,m,d,ageMin,move){
+  const comps={freshness:0,flow:0,depth:0,pressure:0,location:0,independence:0,runway:0,penalty:0};
+  if(ageMin<=10)comps.freshness=22; else if(ageMin<=20)comps.freshness=19; else if(ageMin<=30)comps.freshness=15; else if(ageMin<=45)comps.freshness=8;
+  const alignedFlow=c.dir==='LONG'?f.flow:-f.flow;
+  comps.flow=Math.round(20*clamp01((alignedFlow+0.02)/0.32)*clamp01(f.n/12));
+  if(d&&!d.stale){
+    const dirSign=c.dir==='LONG'?1:-1;
+    const alignedImb=dirSign*d.imbalance;
+    const alignedMicro=dirSign*d.microLeanPts;
+    comps.depth=Math.round(14*clamp01((alignedImb+0.03)/0.28));
+    comps.pressure=Math.round(6*clamp01(d.pressure/45));
+    if(alignedMicro<-4)comps.penalty+=5;
+  }else if(s){
+    const alignedSurvival=c.dir==='LONG'?s.imb:-s.imb;
+    comps.depth=Math.round(14*clamp01((alignedSurvival+0.02)/0.24));
+  }
+  comps.location=Math.round(10*clamp01((c.score||0)/0.75));
+  comps.independence=c.independent?8:0;
+  if(m){
+    const spent=c.dir==='LONG'?pts(price,m.lo):pts(m.hi,price);
+    comps.runway=Math.round(8*clamp01((850-spent)/850));
+  }
+  if(move<EARLY_STRIKE_MIN_SCOUT_MOVE)comps.penalty+=Math.round(clamp01((EARLY_STRIKE_MIN_SCOUT_MOVE-move)/80)*8);
+  if(move>125)comps.penalty+=Math.round(clamp01((move-125)/50)*12);
+  if(ageMin>30)comps.penalty+=Math.round(clamp01((ageMin-30)/15)*10);
+  if(c.poison)comps.penalty+=60;
+  const raw=comps.freshness+comps.flow+comps.depth+comps.pressure+comps.location+comps.independence+comps.runway-comps.penalty;
+  return {score:Math.max(0,Math.min(100,Math.round(raw))),components:comps,alignedFlow:+alignedFlow.toFixed(4)};
+}
+function registerEarlyStrike(c){
+  if(earlyStrikes.some(x=>x.id===c.id))return;
+  const rec={...c,strikeTime:Date.now(),strikePrice:price,strikeAgeMin:c.ageMin,strikeMoveFromScoutPts:c.movePts,earlyScore:c.earlyScore,earlyComponents:{...(c.earlyComponents||{})},livePrice:price,moveFromStrikePts:0,maxFavorableAfterStrike:0,maxAdverseAfterStrike:0,earlyOutcomeStatus:'PENDING',fullExecuteConfirmed:false};
+  const a=earlyActionLabel(rec);rec.earlyActionLabel=a.text;rec.earlyActionClass=a.cls;
+  earlyStrikes.push(rec);c.earlyStrike=true;c.earlyStrikeTime=rec.strikeTime;c.earlyStrikePrice=rec.strikePrice;c.earlyStrikeAgeMin=rec.strikeAgeMin;
+  counters.earlyStrike=(counters.earlyStrike||0)+1;
+  log(`EARLY STRIKE ${c.dir}`,{id:c.id,scoutEntry:c.entry,strikePrice:rec.strikePrice,ageMin:+rec.strikeAgeMin.toFixed(2),moveFromScoutPts:+rec.strikeMoveFromScoutPts.toFixed(0),earlyScore:rec.earlyScore,components:rec.earlyComponents,action:rec.earlyActionLabel});
+}
+function updateEarlyOutcome(x){
+  if(!x||!x.strikePrice||!price)return x;
+  x.livePrice=price;x.moveFromScoutPts=signedMoveFrom(x.dir,x.entry,price);x.moveFromStrikePts=signedMoveFrom(x.dir,x.strikePrice,price);
+  if(x.maxFavorableAfterStrike==null)x.maxFavorableAfterStrike=Math.max(0,x.moveFromStrikePts);
+  if(x.maxAdverseAfterStrike==null)x.maxAdverseAfterStrike=Math.min(0,x.moveFromStrikePts);
+  if(x.moveFromStrikePts>x.maxFavorableAfterStrike){x.maxFavorableAfterStrike=x.moveFromStrikePts;x.maxFavorableAt=Date.now();}
+  if(x.moveFromStrikePts<x.maxAdverseAfterStrike){x.maxAdverseAfterStrike=x.moveFromStrikePts;x.maxAdverseAt=Date.now();}
+  x.minutesSinceStrike=(Date.now()-x.strikeTime)/60000;
+  const linked=survivors.find(s=>s.id===x.id); if(linked){x.fullExecuteConfirmed=true;x.executePrice=linked.executePrice;x.executeTime=linked.executeTime;x.executeAgeMin=linked.executeAgeMin;}
+  if(!x.earlyOutcomeStatus||x.earlyOutcomeStatus==='PENDING'){
+    if(x.maxFavorableAfterStrike>=EARLY_OUTCOME_TARGET_POINTS){x.earlyOutcomeStatus='TARGET_HIT';x.earlyOutcomeAt=x.earlyOutcomeAt||Date.now();if(!x.earlyTargetLogged){counters.earlyTargetHit=(counters.earlyTargetHit||0)+1;x.earlyTargetLogged=true;log(`EARLY TARGET HIT ${x.dir}`,{id:x.id,strikePrice:x.strikePrice,maxFavorableAfterStrike:+x.maxFavorableAfterStrike.toFixed(0)});}}
+    else if(x.maxAdverseAfterStrike<=-EARLY_OUTCOME_FAIL_POINTS){x.earlyOutcomeStatus='FAILED_FIRST';x.earlyOutcomeAt=x.earlyOutcomeAt||Date.now();if(!x.earlyFailLogged){counters.earlyFailedFirst=(counters.earlyFailedFirst||0)+1;x.earlyFailLogged=true;log(`EARLY FAILED FIRST ${x.dir}`,{id:x.id,strikePrice:x.strikePrice,maxAdverseAfterStrike:+x.maxAdverseAfterStrike.toFixed(0)});}}
+    else if(x.minutesSinceStrike>EARLY_OUTCOME_WINDOW_MIN){x.earlyOutcomeStatus='WEAK_FOLLOW_THROUGH';x.earlyOutcomeAt=x.earlyOutcomeAt||Date.now();if(!x.earlyWeakLogged){counters.earlyWeak=(counters.earlyWeak||0)+1;x.earlyWeakLogged=true;log(`EARLY WEAK FOLLOW-THROUGH ${x.dir}`,{id:x.id,strikePrice:x.strikePrice,maxFavorableAfterStrike:+x.maxFavorableAfterStrike.toFixed(0),minutesSinceStrike:+x.minutesSinceStrike.toFixed(1)});}}
+    else x.earlyOutcomeStatus='PENDING';
+  }
+  return x;
+}
+function updateAllEarlyOutcomes(){for(const x of earlyStrikes)updateEarlyOutcome(x)}
+function earlyOutcomeSummary(){
+  let pending=0,target=0,fail=0,weak=0,best=null;
+  for(const x of earlyStrikes){updateEarlyOutcome(x);if(x.earlyOutcomeStatus==='TARGET_HIT')target++;else if(x.earlyOutcomeStatus==='FAILED_FIRST')fail++;else if(x.earlyOutcomeStatus==='WEAK_FOLLOW_THROUGH')weak++;else pending++;if(!best||(x.maxFavorableAfterStrike||0)>(best.maxFavorableAfterStrike||0))best=x;}
+  return {pending,target,fail,weak,best};
+}
+
+function spawnScouts(){let m=pathMetrics();if(!m||!price)return;let f=flowMetrics(), s=survivalMetrics();let longScore=0, shortScore=0, reasons=[];
+ if(m.range>350&&m.eff>.28){ if(m.loc>.62){longScore+=.25;reasons.push('upper-location')} if(m.loc<.38){shortScore+=.25;reasons.push('lower-location')} }
+ if(m.ret>180){longScore+=.2; shortScore+=.08} if(m.ret<-180){shortScore+=.2; longScore+=.08}
+ if(f.n>8){ if(f.flow>.18)longScore+=.22; if(f.flow<-.18)shortScore+=.22; }
+ if(s){ if(s.imb>.08)longScore+=.18; if(s.imb<-.08)shortScore+=.18; if(s.dImb>.03)longScore+=.12; if(s.dImb<-.03)shortScore+=.12; }
+ let recentSame=(dir)=>candidates.some(c=>c.dir===dir&&Date.now()-c.scoutTime<8*60*1000&&Math.abs(pts(price,c.entry))<120);
+ if(longScore>.42&&!recentSame('LONG'))makeScout('LONG',reasons.join('+')||'hades-long-field',longScore);
+ if(shortScore>.42&&!recentSame('SHORT'))makeScout('SHORT',reasons.join('+')||'hades-short-field',shortScore);
+}
+function classifyCandidate(c){
+ let ageMin=(Date.now()-c.scoutTime)/60000;
+ let move=pts(price,c.entry)*(c.dir==='LONG'?1:-1);
+ c.ageMin=ageMin;c.movePts=move;
+ if(c.stage==='REJECT')return;
+ if(c.stage!=='EXECUTE' && ageMin>CANDIDATE_EXPIRY_MIN){
+   c.stage='REJECT';c.poison='stale-survivor';c.expiredAt=c.expiredAt||Date.now();c.fullSurvivor=false;c.evidence=['expired-'+CANDIDATE_EXPIRY_MIN+'m'];c.execScore=-99;
+   if(!c.staleLogged){counters.stale++;c.staleLogged=true;log(`STALE SURVIVOR KILL ${c.dir}`,{id:c.id,entry:c.entry,ageMin:+ageMin.toFixed(2),rule:'no-execute-after-79m'});}return;
+ }
+ let f=flowMetrics(),s=survivalMetrics(),m=pathMetrics();
+ c.evidence=[];c.poison=null;c.freshWindowLeftMin=Math.max(0,CANDIDATE_EXPIRY_MIN-ageMin);
+ if(ageMin>CANDIDATE_CAUTION_MIN&&!c.ageWarned){c.ageWarned=true;log(`AGE CAUTION ${c.dir}`,{id:c.id,ageMin:+ageMin.toFixed(2),freshWindowLeftMin:+c.freshWindowLeftMin.toFixed(2)})}
+ if(move>=IMPACT_POINTS){c.impact=true;if(c.stage==='SCOUT'||c.stage==='ARMED_WATCH')c.stage='IMPACT';c.evidence.push('impact')}
+ if(move>=IMPACT_POINTS+SECOND_PUNCH_POINTS){c.second=true;c.stage='SECOND_PUNCH';c.evidence.push('second-punch')}
+ let flowAligned=(c.dir==='LONG'?f.flow>.12:f.flow<-.12);if(flowAligned&&f.n>=8){c.siphon=true;c.evidence.push('siphon')}
+ let d=depthAuthority();let survivalAligned=(c.dir==='LONG'?s.imb>.03||s.dImb>.02:s.imb<-.03||s.dImb<-.02);if(depthAligned(c.dir,d))survivalAligned=true;if(survivalAligned){c.survival=true;c.evidence.push(d&&!d.stale?'depth-survival':'siphon-survival')}
+ let sameMove=candidates.filter(x=>x.id!==c.id&&x.dir===c.dir&&(x.stage==='EXECUTE'||x.stage==='PROVISIONAL')&&Math.abs(pts(c.entry,x.entry))<250&&Math.abs(c.scoutTime-x.scoutTime)<90*60*1000).length>0;
+ if(sameMove){c.poison='duplicate-fragment';counters.duplicate++}
+ if(m){let spent=c.dir==='LONG'?pts(price,m.lo):pts(m.hi,price);if(spent>850){c.poison='no-runway';counters.runway++}if(m.eff>.55&&Math.abs(m.ret)>1100){c.poison='late-exhaustion';counters.late++}}
+ if(c.impact&&!c.second&&ageMin>12){c.poison=c.poison||'failed-second-punch';counters.bait++}
+ if(c.impact&&((c.dir==='LONG'&&f.flow<-.2)||(c.dir==='SHORT'&&f.flow>.2))){c.poison=c.poison||'inverse-flow-bait';counters.bait++}
+ if(depthOpposes(c.dir,d)){c.poison=c.poison||'depth-opposition-bait';counters.bait++}
+ c.independent=!c.poison&&!survivors.some(x=>x.date===c.date&&Math.abs(x.scoutTime-c.scoutTime)<79*60*1000&&Math.abs(pts(x.entry,c.entry))<350);
+
+ /* V40 early mathematical layer: score before full second-punch confirmation. */
+ const em=earlyScoreModel(c,f,s,m,d,ageMin,move);c.earlyScore=em.score;c.earlyComponents=em.components;c.earlyAlignedFlow=em.alignedFlow;
+ const priorStrikeDuplicate=earlyStrikes.some(x=>x.id!==c.id&&x.dir===c.dir&&Date.now()-x.strikeTime<30*60*1000&&Math.abs(pts(c.entry,x.entry))<250);
+ const earlyHardGate=ageMin<=EARLY_STRIKE_MAX_AGE_MIN&&move<=EARLY_STRIKE_MAX_SCOUT_MOVE&&move>=EARLY_STRIKE_MIN_SCOUT_MOVE&&!c.poison&&c.independent&&!priorStrikeDuplicate&&c.siphon&&c.survival;
+ if(!c.earlyStrike&&earlyHardGate&&c.earlyScore>=EARLY_STRIKE_MIN_SCORE){c.stage='EARLY_STRIKE';registerEarlyStrike(c);}
+ else if(!c.earlyStrike&&ageMin<=EARLY_STRIKE_MAX_AGE_MIN&&!c.poison&&c.independent&&c.earlyScore>=ARMED_WATCH_MIN_SCORE&&(c.stage==='SCOUT'||c.stage==='IMPACT')){c.stage='ARMED_WATCH';if(!c.armedLogged){c.armedLogged=true;log(`ARMED WATCH ${c.dir}`,{id:c.id,entry:c.entry,ageMin:+ageMin.toFixed(2),movePts:+move.toFixed(0),earlyScore:c.earlyScore,components:c.earlyComponents});}}
+
+ let evScore=(c.impact?20:0)+(c.second?25:0)+(c.siphon?20:0)+(c.survival?20:0)+(c.independent?15:0)+Math.round(c.score*20);c.execScore=evScore;if(c.poison)c.execScore-=60;
+ const cycleSurvivors=survivors.filter(x=>x.date===c.date).length;
+ const freshEnough=ageMin<=CANDIDATE_EXPIRY_MIN;
+ const provisionalReady=freshEnough&&c.execScore>=82&&c.impact&&c.survival&&c.independent&&!c.poison&&!c.second;
+ const executeReady=freshEnough&&c.execScore>=82&&c.impact&&c.second&&c.siphon&&c.survival&&c.independent&&!c.poison&&cycleSurvivors<4;
+ if(provisionalReady){c.stage='PROVISIONAL';if(!c.provisionalTime){c.provisionalTime=Date.now();log(`PROVISIONAL SURVIVOR ${c.dir}`,{id:c.id,entry:c.entry,earlyStrikePrice:c.earlyStrikePrice||null,score:c.execScore,evidence:c.evidence,waiting:'second-punch',freshWindowLeftMin:+c.freshWindowLeftMin.toFixed(2)})}}
+ if(executeReady){
+   c.stage='EXECUTE';
+   if(!survivors.some(x=>x.id===c.id)){
+     const execPx=price;const survivor={...c,executeTime:Date.now(),executeAgeMin:ageMin,executePrice:execPx,executeMoveFromScoutPts:move,livePrice:price,moveFromScoutPts:move,moveFromExecutePts:0,maxFavorableAfterExecute:0,maxAdverseAfterExecute:0,outcomeStatus:'PENDING',fullSurvivor:true,expiryRule:'executed-within-79m'};
+     updateOutcome(survivor);survivors.push(survivor);const er=earlyStrikes.find(x=>x.id===c.id);if(er){er.fullExecuteConfirmed=true;er.executePrice=execPx;er.executeTime=survivor.executeTime;er.executeAgeMin=ageMin;}
+     log(`EXECUTE SURVIVOR ${c.dir}`,{id:c.id,scoutEntry:c.entry,earlyStrikePrice:c.earlyStrikePrice||null,executePrice:execPx,score:c.execScore,evidence:c.evidence,rule:'second-punch-required-within-79m',ageMin:+ageMin.toFixed(2),moveFromScoutPts:+move.toFixed(0),action:survivor.actionLabel});
+   }
+ }
+ if(c.poison&&c.stage!=='EXECUTE')c.stage='REJECT';
+}
+function evaluateLive(){spawnScouts();for(let c of candidates){if(c.stage!=='EXECUTE'&&c.stage!=='REJECT')classifyCandidate(c)}updateAllEarlyOutcomes();updateAllOutcomes();candidates=candidates.filter(c=>Date.now()-c.scoutTime<2*3600*1000 || c.stage==='EXECUTE').slice(-80)}
+function render(){
+ let s=survivalMetrics(), f=flowMetrics();const bs=E('bookScore'),bd=E('bookDetail'),fs=E('flowScore'),fd=E('flowDetail');
+ let d=s?s.depth:null; if(bs)bs.textContent=d&&!d.stale?(d.imbalance*100).toFixed(1)+'%':(s?s.imb.toFixed(3):'—'); if(bd)bd.textContent=d&&!d.stale?`depth ${d.lean} • age ${d.ageSec}s • spread ${d.spreadPts.toFixed(1)}pt • micro ${d.microLeanPts.toFixed(1)}pt • pressure ${d.pressure.toFixed(0)}%`:(s?`fallback survival ${s.imb.toFixed(3)} • Δ ${s.dImb.toFixed(3)} • ${s.range.toFixed(0)}pt path`:'Waiting for BingX depth20'); if(fs)fs.textContent=f.flow.toFixed(3); if(fd)fd.textContent=`${f.n} trades/90s • buy ${(f.buyRatio*100).toFixed(0)}% • sell ${(f.sellRatio*100).toFixed(0)}%`;
+ let today=mytDate(), surv=survivors.filter(x=>x.date===today);E('survivorCount').textContent=`${surv.length} / 4`;E('survivorBar').style.width=Math.min(100,surv.length/4*100)+'%';let alive=candidates.filter(c=>c.stage!=='REJECT').length;E('suspectCount').textContent=alive;E('suspectBar').style.width=Math.min(100,alive/20*100)+'%';
+ let esToday=earlyStrikes.filter(x=>x.date===today);if(E('earlyStrikeCount'))E('earlyStrikeCount').textContent=esToday.length;if(E('earlyStrikeBar'))E('earlyStrikeBar').style.width=Math.min(100,esToday.length/4*100)+'%';let activeES=esToday.filter(x=>x.earlyOutcomeStatus==='PENDING');if(E('activeEarlyStrike'))E('activeEarlyStrike').textContent=activeES.length;if(E('activeEarlyDetail'))E('activeEarlyDetail').textContent=activeES.length?`${activeES[activeES.length-1].dir} • ${activeES[activeES.length-1].earlyScore} score • ${(activeES[activeES.length-1].minutesSinceStrike||0).toFixed(1)}m old`:'No live strike.';
+ E('cDup').textContent=counters.duplicate;E('cRunway').textContent=counters.runway;E('cLate').textContent=counters.late;E('cBait').textContent=counters.bait;if(E('cStale'))E('cStale').textContent=counters.stale||0;
+ const eos=earlyOutcomeSummary();
+ let eb=E('earlyStrikeBody');if(eb){if(!esToday.length)eb.innerHTML='<tr><td colspan="5" class="small">No Early Strike yet. ARMED WATCH is not an entry.</td></tr>';else eb.innerHTML=esToday.slice(-8).map((x,i)=>{updateEarlyOutcome(x);const a=earlyActionLabel(x);return `<tr><td>${i+1}</td><td><span class="tag ${x.dir.toLowerCase()}">${x.dir}</span><br><span class="tag ${a.cls}">STRIKE</span></td><td class="mono">Scout ${fmtPx(x.entry)}<span class="minirow">Strike ${fmtPx(x.strikePrice)}</span><span class="minirow">Exec ${x.executePrice?fmtPx(x.executePrice):'—'}</span><span class="minirow">Live ${price?fmtPx(price):'—'}</span></td><td>${x.earlyScore}/100<br><span class="small">age ${(x.strikeAgeMin||0).toFixed(1)}m • scout move ${(x.strikeMoveFromScoutPts||0).toFixed(0)}pt</span><span class="minirow small">F${x.earlyComponents?.freshness||0} Flow${x.earlyComponents?.flow||0} D${(x.earlyComponents?.depth||0)+(x.earlyComponents?.pressure||0)} R${x.earlyComponents?.runway||0} P-${x.earlyComponents?.penalty||0}</span></td><td><span class="tag ${a.cls}">${a.text}</span><br><span class="small">${x.fullExecuteConfirmed?'FULL EXECUTE CONFIRMED':'awaiting full confirmation'}</span></td></tr>`}).join('');}
+ let eob=E('earlyOutcomeBody');if(eob){if(!esToday.length)eob.innerHTML='<tr><td colspan="5" class="small">No Early Strike outcomes yet.</td></tr>';else eob.innerHTML=esToday.slice(-8).map((x,i)=>{updateEarlyOutcome(x);const cls=earlyStatusClass(x.earlyOutcomeStatus);return `<tr><td>${i+1}</td><td><span class="tag ${x.dir.toLowerCase()}">${x.dir}</span></td><td>${(x.moveFromStrikePts||0).toFixed(0)}pt now<br><span class="small">best ${(x.maxFavorableAfterStrike||0).toFixed(0)}pt • adverse ${(x.maxAdverseAfterStrike||0).toFixed(0)}pt</span></td><td><span class="tag ${cls}">${x.earlyOutcomeStatus||'PENDING'}</span><br><span class="small">target +500 / fail -500</span></td><td>${x.fullExecuteConfirmed?'<span class="tag exec">EXECUTE CONFIRMED</span>':'<span class="tag pending">EARLY ONLY</span>'}<br><span class="small">${(x.minutesSinceStrike||0).toFixed(1)}m after strike</span></td></tr>`}).join('');}
+ const os=outcomeSummary(); if(E('outcomePending'))E('outcomePending').textContent=os.pending; if(E('bestAfterExecute'))E('bestAfterExecute').textContent=os.best?((os.best.maxFavorableAfterExecute||0).toFixed(0)+'pt'):'—'; if(E('bestAfterDetail'))E('bestAfterDetail').textContent=os.best?`${os.best.dir} • ${os.best.outcomeStatus||'PENDING'} • adverse ${(os.best.maxAdverseAfterExecute||0).toFixed(0)}pt`:'No EXECUTE yet.';
+ let sb=E('survivorBody');if(!surv.length)sb.innerHTML='<tr><td colspan="5" class="small">No FULL survivors yet. PROVISIONAL is watch-only until second punch.</td></tr>';else sb.innerHTML=surv.slice(-4).map((x,i)=>{updateOutcome(x); const a=actionLabel(x); return `<tr><td>${i+1}</td><td><span class="tag ${x.dir.toLowerCase()}">${x.dir}</span><br><span class="tag exec">EXECUTE</span></td><td class="mono">Scout ${fmtPx(x.entry)}<span class="minirow">Exec ${fmtPx(x.executePrice||x.livePrice||price||x.entry)}</span><span class="minirow">Live ${price?fmtPx(price):'—'}</span></td><td>${(x.moveFromScoutPts||x.movePts||0).toFixed(0)}pt from scout<br><span class="small">${(x.moveFromExecutePts||0).toFixed(0)}pt after EXECUTE</span></td><td><span class="tag ${a.cls}">${a.text}</span><br><span class="small">age ${(x.executeAgeMin||0).toFixed(1)}m • score ${x.execScore||0}</span></td></tr>`}).join('');
+ let ob=E('outcomeBody'); if(ob){ if(!surv.length)ob.innerHTML='<tr><td colspan="5" class="small">No EXECUTE outcomes yet.</td></tr>'; else ob.innerHTML=surv.slice(-8).map((x,i)=>{updateOutcome(x); const cls=outcomeStatusClass(x.outcomeStatus); return `<tr><td>${i+1}</td><td><span class="tag ${x.dir.toLowerCase()}">${x.dir}</span></td><td>${(x.moveFromExecutePts||0).toFixed(0)}pt now<br><span class="small">best ${(x.maxFavorableAfterExecute||0).toFixed(0)}pt • adverse ${(x.maxAdverseAfterExecute||0).toFixed(0)}pt</span></td><td><span class="tag ${cls}">${x.outcomeStatus||'PENDING'}</span><br><span class="small">target +500 / fail -500</span></td><td>${(x.minutesSinceExecute||0).toFixed(1)}m after EXECUTE<br><span class="small">exec px ${fmtPx(x.executePrice||x.entry)}</span></td></tr>`}).join('');}
+
+ let sorted=candidates.slice().sort((a,b)=>(b.execScore||0)-(a.execScore||0)).slice(0,20);let tb=E('suspectBody');if(!sorted.length)tb.innerHTML='<tr><td colspan="5" class="small">No suspects yet.</td></tr>';else tb.innerHTML=sorted.map((c,i)=>{let cls=(c.poison==='stale-survivor'?'stale':(c.stage==='REJECT'?'dead':(c.stage==='EXECUTE'?'exec':(c.stage==='PROVISIONAL'?'warn':(c.stage==='EARLY_STRIKE'?'strike':(c.stage==='ARMED_WATCH'?'armed':'wait'))))));let action=c.stage==='ARMED_WATCH'?'ARMED · WAIT FOR STRIKE':(c.stage==='EARLY_STRIKE'?'EARLY TACTICAL CANDIDATE':(c.stage==='PROVISIONAL'?'WATCH · WAIT SECOND PUNCH':(c.stage==='EXECUTE'?'FULL SURVIVOR':(c.poison==='stale-survivor'?'STALE · DO NOT TRADE':(c.stage==='REJECT'?'IGNORE':'WAIT')))));let fresh=(c.stage==='EXECUTE')?'executed fresh':((c.freshWindowLeftMin!==undefined)?('fresh left '+c.freshWindowLeftMin.toFixed(1)+'m'):'fresh window 79m');return `<tr><td>${i+1}</td><td><span class="tag ${c.dir.toLowerCase()}">${c.dir}</span><br><span class="small mono">${fmtPx(c.entry||0)}</span></td><td>${(c.ageMin||0).toFixed(1)}m<br><span class="small">${fresh}</span></td><td><span class="tag ${cls}">${c.stage}</span><br><span class="small">${action}</span></td><td>${c.evidence?c.evidence.join('+'):''}${c.poison?'<br><span class="bad">'+c.poison+'</span>':''}<br><span class="small">exec ${c.execScore||0} • early ${c.earlyScore||0} • move ${(c.movePts||0).toFixed(0)}pt</span></td></tr>`}).join('')
+}
+function safeEvidenceClone(obj){
+  try{return JSON.parse(JSON.stringify(obj))}catch(e){return String(obj)}
+}
+function evidenceFilename(){return `virgo_v40_early_strike_evidence_${Date.now()}.json`}
+function makeEvidencePayload(){
+  return {
+    engine:'VIRGO_500_V40_EARLY_STRIKE_MATHEMATICAL_LAYER',
+    created:nowIso(),
+    symbol:'1000PEPEUSDT',
+    feed:'HADES vMaster price/trade stack + isolated OMEN BingX depth20 authority only',
+    depthChannel:BINGX_DEPTH_CHANNEL,
+    depthState:safeEvidenceClone(depthState),
+    lastDepthAt,
+    lastDepthAgeSec:lastDepthAt?Math.floor((Date.now()-lastDepthAt)/1000):null,
+    livePrice:price,
+    lastSource,
+    lastTickAt:lastTs,
+    survivorCountToday:survivors.filter(x=>x.date===mytDate()).length,
+    provisionalCountToday:candidates.filter(x=>x.date===mytDate()&&x.stage==='PROVISIONAL').length,
+    earlyStrikeCountToday:earlyStrikes.filter(x=>x.date===mytDate()).length,
+    armedWatchCountToday:candidates.filter(x=>x.date===mytDate()&&x.stage==='ARMED_WATCH').length,
+    cycleDay:mytDate(),
+    survivorRule:'FULL EXECUTE remains strict: impact + second punch + siphon + depth survival + independence + no poison + age <=79m',
+    earlyStrikeRule:'Score >=70, age <=45m, move 20..175pt, siphon+survival+independence, no poison, no recent strike duplicate; >=85 is aggressive',
+    candidateExpiryMin:CANDIDATE_EXPIRY_MIN,
+    staleWarningMin:CANDIDATE_CAUTION_MIN,
+    depthSubscription:safeEvidenceClone(depthSubscription),
+    earlyStrikes:safeEvidenceClone(earlyStrikes),
+    earlyOutcomeSummary:safeEvidenceClone(earlyOutcomeSummary()),
+    earlyStrikeRules:{armedWatchMinScore:ARMED_WATCH_MIN_SCORE,earlyStrikeMinScore:EARLY_STRIKE_MIN_SCORE,aggressiveMinScore:AGGRESSIVE_STRIKE_MIN_SCORE,maxAgeMin:EARLY_STRIKE_MAX_AGE_MIN,bestAgeMin:EARLY_STRIKE_BEST_AGE_MIN,minScoutMovePts:EARLY_STRIKE_MIN_SCOUT_MOVE,maxScoutMovePts:EARLY_STRIKE_MAX_SCOUT_MOVE,targetAfterStrikePts:EARLY_OUTCOME_TARGET_POINTS,failAfterStrikePts:EARLY_OUTCOME_FAIL_POINTS},
+    survivors:safeEvidenceClone(survivors),
+    outcomeSummary:safeEvidenceClone(outcomeSummary()),
+    outcomeRules:{targetAfterExecutePts:OUTCOME_TARGET_POINTS,failAfterExecutePts:OUTCOME_FAIL_POINTS,lateExecuteMin:LATE_EXECUTE_MIN,chaseWarnScoutMovePts:CHASE_WARN_SCOUT_MOVE},
+    candidates:safeEvidenceClone(candidates),
+    evidence:safeEvidenceClone(evidence),
+    counters:safeEvidenceClone(counters),
+    guardian:safeEvidenceClone(SHEOL_STREAM_GUARDIAN),
+    siphon:{lastTradeAt:SIPH.lastTradeAt,tradeAgeSec:SIPH.lastTradeAt?Math.floor((Date.now()-SIPH.lastTradeAt)/1000):null,ratioV:SIPH.ratioV,ratioN:SIPH.ratioN,buckets:SIPH.buckets?SIPH.buckets.size:0},
+    candleCount:candles.length,
+    note:'V40 preserves V38 stale kill and V39 execution visibility, inserts a transparent ARMED WATCH / EARLY STRIKE mathematical layer before FULL EXECUTE, stores scout/strike/execute/live prices, and tracks early and full outcomes separately. Minimum-four target remains based on full survivors in the MYT 08:00 cycle.'
+  }
+}
+function evidenceJson(){return JSON.stringify(makeEvidencePayload(),null,2)}
+function setExportStatus(msg,kind){let el=E('exportStatus');if(el){el.textContent=msg;el.className='small '+(kind||'')}}
+function showExportBox(json,msg){let box=E('exportBox'),txt=E('exportText');if(txt)txt.value=json;if(box)box.classList.add('show');setExportStatus(msg||'Evidence export ready.','ok')}
+function downloadEvidenceJson(json,filename){
+  const blob=new Blob([json],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=filename;
+  a.rel='noopener';
+  a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{try{document.body.removeChild(a)}catch(e){} try{URL.revokeObjectURL(url)}catch(e){}},2500);
+}
+async function shareEvidenceJson(json,filename){
+  const file=new File([json],filename,{type:'application/json'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    await navigator.share({files:[file],title:'VIRGO V40 Evidence',text:'VIRGO V40 Early Strike evidence JSON'});
+    return true;
+  }
+  if(navigator.share){await navigator.share({title:'VIRGO V40 Evidence',text:json.slice(0,9000)});return true;}
+  return false;
+}
+async function copyEvidenceJson(json){
+  if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(json);return true;}
+  const txt=E('exportText'); if(txt){txt.focus();txt.select();document.execCommand('copy');return true;}
+  return false;
+}
+async function exportEvidence(ev){
+  try{if(ev&&ev.preventDefault)ev.preventDefault();}catch(e){}
+  let json,filename;
+  try{
+    json=evidenceJson();
+    filename=evidenceFilename();
+    showExportBox(json,`Evidence prepared: ${filename}`);
+    downloadEvidenceJson(json,filename);
+    log('evidence export prepared',{filename,bytes:json.length,survivors:survivors.filter(x=>x.date===mytDate()).length,earlyStrikes:earlyStrikes.filter(x=>x.date===mytDate()).length,provisional:candidates.filter(x=>x.date===mytDate()&&x.stage==='PROVISIONAL').length,candidates:candidates.length});
+    setExportStatus(`Download triggered. If iPhone blocks it, use Share / Save or Copy JSON below. File: ${filename}`,'ok');
+  }catch(err){
+    const msg='Export failed: '+(err&&err.message?err.message:String(err));
+    setExportStatus(msg,'bad'); log(msg); alert(msg);
+  }
+}
+function wireEvidenceExportButtons(){
+  const dl=E('downloadEvidenceBtn'),sh=E('shareEvidenceBtn'),cp=E('copyEvidenceBtn'),cl=E('closeExportBtn');
+  if(dl)dl.onclick=()=>{const json=E('exportText')&&E('exportText').value?E('exportText').value:evidenceJson();downloadEvidenceJson(json,evidenceFilename());setExportStatus('Download triggered again.','ok')};
+  if(sh)sh.onclick=async()=>{try{const json=E('exportText')&&E('exportText').value?E('exportText').value:evidenceJson();const ok=await shareEvidenceJson(json,evidenceFilename());setExportStatus(ok?'Share sheet opened.':'Share not available; use Copy JSON.','ok')}catch(e){setExportStatus('Share failed/cancelled. Use Download or Copy JSON.','amber')}};
+  if(cp)cp.onclick=async()=>{try{const json=E('exportText')&&E('exportText').value?E('exportText').value:evidenceJson();await copyEvidenceJson(json);setExportStatus('Evidence JSON copied.','ok')}catch(e){setExportStatus('Copy failed. Select the text manually.','bad')}};
+  if(cl)cl.onclick=()=>{const box=E('exportBox');if(box)box.classList.remove('show')};
+}
+function clearSession(){candidates=[];earlyStrikes=[];survivors=[];evidence=[];counters={duplicate:0,runway:0,late:0,bait:0,stale:0,targetHit:0,failedFirst:0,weakFollow:0,earlyStrike:0,earlyTargetHit:0,earlyFailedFirst:0,earlyWeak:0};localStorage.removeItem('virgo_v40_early_strike_evidence');log('session cleared');render()}
+setInterval(()=>{if(lastTs&&Date.now()-lastTs>15000)setStatus('STALE / RECONNECT')},5000);
+setInterval(()=>{try{localStorage.setItem('virgo_v40_early_strike_evidence',JSON.stringify({survivors,earlyStrikes,candidates,evidence,counters}))}catch(e){}},10000);
+try{let saved=JSON.parse(localStorage.getItem('virgo_v40_early_strike_evidence')||'null');if(saved){survivors=saved.survivors||[];earlyStrikes=saved.earlyStrikes||[];candidates=saved.candidates||[];evidence=saved.evidence||[];counters={duplicate:0,runway:0,late:0,bait:0,stale:0,targetHit:0,failedFirst:0,weakFollow:0,earlyStrike:0,earlyTargetHit:0,earlyFailedFirst:0,earlyWeak:0,...(saved.counters||{})};log('restored local evidence')}}catch(e){}
+wireEvidenceExportButtons();startAll();render();setInterval(render,1000);
+</script>
+</body></html>
