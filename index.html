@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>VIRGO V41.2 | Dual-Path Regime Lifecycle Engine — Outcome Audit Alignment Patch</title>
+<title>VIRGO V41.3 | Dual-Path Regime Lifecycle Engine — Mobile Viewport Lock</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 <style>
 :root{--bg:#070807;--panel:#0f1512;--panel2:#121b16;--line:#223329;--text:#e9fff2;--muted:#8aa997;--green:#32f58a;--red:#ff5f6d;--amber:#f9cb5e;--blue:#6bb7ff;--violet:#c08cff;}
@@ -80,11 +80,82 @@
   .auditOutcomeStack .small{min-height:28px}
 }
 
+
+/* V41.3 iPhone horizontal-swim elimination */
+html{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+  overscroll-behavior-x:none;
+  -webkit-text-size-adjust:100%;
+}
+body{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  overflow-x:hidden;
+  overscroll-behavior-x:none;
+  touch-action:pan-y;
+  position:relative;
+}
+.wrap{
+  width:100%;
+  max-width:520px;
+  min-width:0;
+  overflow-x:hidden;
+}
+.wrap > *,
+.hero,.grid,.card,.section,.sectionTitle,
+.table,.exportBox,.btns,.exportActions,.price{
+  min-width:0;
+  max-width:100%;
+}
+.grid > *, .card > *{min-width:0;max-width:100%}
+.section{overflow-x:hidden}
+.table{
+  width:100%;
+  max-width:100%;
+  table-layout:fixed;
+}
+.table th,.table td{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  hyphens:auto;
+}
+.table .mono,.table .small,.table .tag,
+.sub,.small,.footer,.sectionTitle,.familyLine{
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.price{flex-wrap:wrap;overflow:hidden}
+.px{
+  min-width:0;
+  max-width:100%;
+  font-size:clamp(24px,7.2vw,30px);
+  overflow-wrap:anywhere;
+}
+.btns,.exportActions{overflow:hidden}
+.btns > *, .exportActions > *{min-width:0;max-width:100%}
+button,input,select,textarea,pre{max-width:100%}
+.exportBox textarea{display:block;min-width:0;max-width:100%}
+@supports (overflow:clip){
+  html,body,.wrap{overflow-x:clip}
+}
+@media(max-width:430px){
+  .wrap{padding-left:8px;padding-right:8px}
+  .table{font-size:9px}
+  .table th,.table td{padding-left:2px;padding-right:2px}
+  .table .tag{font-size:8px;padding-left:3px;padding-right:3px}
+}
+
 </style>
 </head>
 <body><div class="wrap">
 <div class="hero">
-<h1>VIRGO V41.2 DUAL-PATH REGIME LIFECYCLE ENGINE</h1>
+<h1>VIRGO V41.3 DUAL-PATH REGIME LIFECYCLE ENGINE</h1>
 <div class="sub">Purpose: preserve V40’s proven early timing while separating regime-aligned continuation from reversal formation. V41 adds BULLISH / BEARISH / TRANSITION / BALANCED governance, CONTINUATION EARLY STRIKE, EXHAUSTION WATCH → TURN ALERT, dual-horizon outcomes, opportunity-family clustering, and precise age-versus-price execution warnings.</div>
 <div class="price"><div class="px" id="price">—</div><span class="pill" id="feedState">CONNECTING</span></div>
 <div class="small liveMeta" id="lastSeen">Waiting for live feed…</div>
@@ -111,7 +182,7 @@
 <div class="section"><div class="sectionTitle">Top-20 Suspect Board</div><table class="table"><thead><tr><th>#</th><th>Dir</th><th>Age</th><th>Path / Stage</th><th>Evidence</th></tr></thead><tbody id="suspectBody"><tr><td colspan="5" class="small">No suspects yet.</td></tr></tbody></table></div>
 <div class="section"><div class="sectionTitle">Non-Survivor Taxonomy Counters</div><div class="grid"><div class="card"><h2>Duplicate Fragment</h2><div class="big" id="cDup">0</div></div><div class="card"><h2>No Runway</h2><div class="big" id="cRunway">0</div></div><div class="card"><h2>Late Exhaustion</h2><div class="big" id="cLate">0</div></div><div class="card"><h2>Depth / Flow Bait</h2><div class="big" id="cBait">0</div></div><div class="card"><h2>Stale Survivor Kill</h2><div class="big" id="cStale">0</div><div class="small">Age &gt; 79m cannot execute.</div></div></div></div>
 <div class="section"><div class="sectionTitle">Evidence Log</div><div class="log" id="log"></div></div>
-<div class="footer">VIRGO V41.1 is a live lifecycle evidence harness, not a statistically promoted execution engine. CONTINUATION EARLY STRIKE and TURN ALERT are separate early pathways. FULL EXECUTE remains the strict confirmation. Family clustering prevents multiple entries inside one broad trend from masquerading as independent survivors.</div>
+<div class="footer">VIRGO V41.3 is a live lifecycle evidence harness, not a statistically promoted execution engine. CONTINUATION EARLY STRIKE and TURN ALERT are separate early pathways. FULL EXECUTE remains the strict confirmation. Family clustering prevents multiple entries inside one broad trend from masquerading as independent survivors.</div>
 </div>
 
 <script>
