@@ -3,8 +3,36 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>VIRGO V41.5 | V41.2 Ledger Alignment Restore + Mobile Lock</title>
+<title>VIRGO V41.6 | Bottom Scroll Seal + Refresh Top Reset</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<script>
+/* V41.6 refresh-position governor: disable browser scroll restoration and force a clean top position on every load/refresh. */
+(function(){
+  try{ if('scrollRestoration' in history) history.scrollRestoration='manual'; }catch(e){}
+  function virgoResetScrollTop(){
+    try{ window.scrollTo(0,0); }catch(e){}
+    try{ document.documentElement.scrollTop=0; }catch(e){}
+    try{ if(document.body) document.body.scrollTop=0; }catch(e){}
+  }
+  virgoResetScrollTop();
+  document.addEventListener('DOMContentLoaded',function(){
+    virgoResetScrollTop();
+    requestAnimationFrame(virgoResetScrollTop);
+  },{once:true});
+  window.addEventListener('load',function(){
+    virgoResetScrollTop();
+    requestAnimationFrame(virgoResetScrollTop);
+    setTimeout(virgoResetScrollTop,80);
+    setTimeout(virgoResetScrollTop,320);
+  },{once:true});
+  window.addEventListener('pageshow',function(){
+    virgoResetScrollTop();
+    requestAnimationFrame(virgoResetScrollTop);
+    setTimeout(virgoResetScrollTop,120);
+  });
+  window.addEventListener('pagehide',virgoResetScrollTop);
+})();
+</script>
 <style>
 :root{--bg:#070807;--panel:#0f1512;--panel2:#121b16;--line:#223329;--text:#e9fff2;--muted:#8aa997;--green:#32f58a;--red:#ff5f6d;--amber:#f9cb5e;--blue:#6bb7ff;--violet:#c08cff;}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#14351f 0,#070807 38%,#030403 100%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;overflow-x:hidden}.wrap{width:100%;max-width:520px;margin:0 auto;padding:10px 10px 26px}.hero{border:1px solid #2e5b3e;background:linear-gradient(180deg,#122319,#0b110e);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 0 22px rgba(50,245,138,.12)}h1{font-size:20px;letter-spacing:.5px;margin:0 0 6px}.sub{font-size:12px;color:var(--muted);line-height:1.35}.price{display:flex;align-items:center;gap:8px;margin-top:10px;margin-bottom:8px;min-height:36px}.px{font-size:30px;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums;line-height:1}.pill{display:inline-flex;align-items:center;justify-content:center;min-height:26px;font-size:11px;line-height:1.1;border:1px solid #31533d;border-radius:999px;padding:5px 9px;color:#b7ffd0;background:#0b1a10}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.card{border:1px solid var(--line);background:rgba(13,22,17,.9);border-radius:14px;padding:10px;min-height:64px}.card h2{font-size:11px;letter-spacing:.8px;color:#b7ffd0;margin:0 0 7px;text-transform:uppercase}.big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}.small{font-size:11px;color:var(--muted);line-height:1.3}.bar{height:7px;background:#18241d;border-radius:999px;overflow:hidden;margin-top:6px}.fill{height:100%;width:0;background:linear-gradient(90deg,#274b35,var(--green));transition:.2s}.section{margin-top:10px}.sectionTitle{font-size:12px;font-weight:800;color:#d9ffe5;margin:12px 2px 7px;letter-spacing:.5px}.table{width:100%;border-collapse:collapse;font-size:11px}.table th,.table td{border-bottom:1px solid #1e2e25;padding:6px 4px;text-align:left;vertical-align:top}.table th{color:#90caa6;font-weight:700}.tag{display:inline-block;border-radius:999px;padding:3px 6px;border:1px solid #33483a;background:#0b130f;font-size:10px;color:#c8ffda}.tag.long{border-color:#2f8052;color:#75ffad}.tag.short{border-color:#a8434b;color:#ff99a3}.tag.exec{border-color:#32f58a;background:#0e2a19;color:#7dffb3}.tag.wait{border-color:#78612c;color:#ffd46a}.tag.dead{border-color:#672f37;color:#ff818d}.tag.warn{border-color:#78612c;background:#201807;color:#ffd46a}.tag.stale{border-color:#784a2c;background:#201007;color:#ffb36a}.tag.win{border-color:#32f58a;background:#0e2a19;color:#7dffb3}.tag.fail{border-color:#ff5f6d;background:#251014;color:#ff9aa3}.tag.late{border-color:#f9cb5e;background:#201807;color:#ffd46a}.tag.pending{border-color:#6bb7ff;background:#071625;color:#9ad2ff}.tag.armed{border-color:#6bb7ff;background:#071625;color:#9ad2ff}.tag.strike{border-color:#c08cff;background:#1a0e27;color:#dfb7ff;box-shadow:0 0 10px rgba(192,140,255,.22)}.tag.aggressive{border-color:#32f58a;background:#0e2a19;color:#7dffb3;box-shadow:0 0 12px rgba(50,245,138,.24)}.nowrap{white-space:nowrap}.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.decision{font-weight:900;letter-spacing:.2px}.minirow{display:block;margin-top:2px}.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.btn{appearance:none;border:1px solid #37513f;background:#101a14;color:#eafff0;border-radius:12px;padding:10px 11px;font-weight:800;font-size:12px}.btn.primary{border-color:#2aa866;background:#0d2b19;color:#9dffc2}.btn.warn{border-color:#78612c;color:#ffd46a}.log{height:170px;overflow:auto;border:1px solid #1d2a22;background:#080d0a;border-radius:12px;padding:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:#aeeec1;white-space:pre-wrap}.footer{font-size:10px;color:#6d8f7b;line-height:1.35;margin-top:12px}.ok{color:var(--green)}.bad{color:var(--red)}.amber{color:var(--amber)}.blue{color:var(--blue)}
@@ -105,11 +133,33 @@ body{
   html,body,.wrap{overflow-x:clip}
 }
 
+
+/* V41.6 bottom-scroll seal. Ledger geometry remains exactly V41.2/V41.5. */
+html{
+  min-height:100%;
+  background:#030403;
+  overscroll-behavior:none;
+}
+body{
+  min-height:100vh;
+  min-height:100dvh;
+  padding:0;
+  background-color:#030403;
+  overscroll-behavior-y:none;
+}
+.wrap{
+  padding-bottom:max(10px, env(safe-area-inset-bottom));
+}
+.footer{
+  margin-bottom:0;
+  padding-bottom:0;
+}
+
 </style>
 </head>
 <body><div class="wrap">
 <div class="hero">
-<h1>VIRGO V41.5 DUAL-PATH REGIME LIFECYCLE ENGINE</h1>
+<h1>VIRGO V41.6 DUAL-PATH REGIME LIFECYCLE ENGINE</h1>
 <div class="sub">Purpose: preserve V40’s proven early timing while separating regime-aligned continuation from reversal formation. V41 adds BULLISH / BEARISH / TRANSITION / BALANCED governance, CONTINUATION EARLY STRIKE, EXHAUSTION WATCH → TURN ALERT, dual-horizon outcomes, opportunity-family clustering, and precise age-versus-price execution warnings.</div>
 <div class="price"><div class="px" id="price">—</div><span class="pill" id="feedState">CONNECTING</span></div>
 <div class="small liveMeta" id="lastSeen">Waiting for live feed…</div>
@@ -136,7 +186,7 @@ body{
 <div class="section"><div class="sectionTitle">Top-20 Suspect Board</div><table class="table"><thead><tr><th>#</th><th>Dir</th><th>Age</th><th>Path / Stage</th><th>Evidence</th></tr></thead><tbody id="suspectBody"><tr><td colspan="5" class="small">No suspects yet.</td></tr></tbody></table></div>
 <div class="section"><div class="sectionTitle">Non-Survivor Taxonomy Counters</div><div class="grid"><div class="card"><h2>Duplicate Fragment</h2><div class="big" id="cDup">0</div></div><div class="card"><h2>No Runway</h2><div class="big" id="cRunway">0</div></div><div class="card"><h2>Late Exhaustion</h2><div class="big" id="cLate">0</div></div><div class="card"><h2>Depth / Flow Bait</h2><div class="big" id="cBait">0</div></div><div class="card"><h2>Stale Survivor Kill</h2><div class="big" id="cStale">0</div><div class="small">Age &gt; 79m cannot execute.</div></div></div></div>
 <div class="section"><div class="sectionTitle">Evidence Log</div><div class="log" id="log"></div></div>
-<div class="footer">VIRGO V41.1 is a live lifecycle evidence harness, not a statistically promoted execution engine. CONTINUATION EARLY STRIKE and TURN ALERT are separate early pathways. FULL EXECUTE remains the strict confirmation. Family clustering prevents multiple entries inside one broad trend from masquerading as independent survivors.</div>
+<div class="footer">VIRGO V41.6 is a live lifecycle evidence harness, not a statistically promoted execution engine. CONTINUATION EARLY STRIKE and TURN ALERT are separate early pathways. FULL EXECUTE remains the strict confirmation. Family clustering prevents multiple entries inside one broad trend from masquerading as independent survivors.</div>
 </div>
 
 <script>
@@ -573,12 +623,12 @@ function render(){
 function safeEvidenceClone(obj){
   try{return JSON.parse(JSON.stringify(obj))}catch(e){return String(obj)}
 }
-function evidenceFilename(){return `virgo_v41_1_dual_path_regime_lifecycle_evidence_${Date.now()}.json`}
+function evidenceFilename(){return `virgo_v41_6_dual_path_regime_lifecycle_evidence_${Date.now()}.json`}
 function makeEvidencePayload(){updateFamilyMetrics();return {
- engine:'VIRGO_500_V41_5_V41_2_LEDGER_RESTORE',created:nowIso(),symbol:'1000PEPEUSDT',feed:'HADES vMaster price/trade stack + isolated OMEN BingX depth20 authority only',depthChannel:BINGX_DEPTH_CHANNEL,depthState:safeEvidenceClone(depthState),lastDepthAt,lastDepthAgeSec:lastDepthAt?Math.floor((Date.now()-lastDepthAt)/1000):null,livePrice:price,lastSource,lastTickAt:lastTs,cycleDay:mytDate(),
+ engine:'VIRGO_500_V41_6_BOTTOM_SCROLL_REFRESH_TOP_FIX',created:nowIso(),symbol:'1000PEPEUSDT',feed:'HADES vMaster price/trade stack + isolated OMEN BingX depth20 authority only',depthChannel:BINGX_DEPTH_CHANNEL,depthState:safeEvidenceClone(depthState),lastDepthAt,lastDepthAgeSec:lastDepthAt?Math.floor((Date.now()-lastDepthAt)/1000):null,livePrice:price,lastSource,lastTickAt:lastTs,cycleDay:mytDate(),
  regimeState:safeEvidenceClone(regimeState),survivorCountToday:survivors.filter(x=>x.date===mytDate()).length,opportunityFamilyCountToday:opportunityFamilies.filter(x=>x.date===mytDate()).length,continuationStrikeCountToday:earlyStrikes.filter(x=>x.date===mytDate()).length,turnAlertCountToday:turnAlerts.filter(x=>x.date===mytDate()).length,
  rules:{continuation:'Regime aligned + score >=70 + aligned flow floor + survival + 12s persistence + age<=45m + move 20..175pt',reversal:'Counter-regime exhaustion watch >=58; turn alert >=72 with exhaustion/location plus flow or depth flip and 12s persistence',fullExecute:'impact + second punch + siphon + survival + independence + no poison + age<=79m',tacticalWindowMin:TACTICAL_WINDOW_MIN,extendedWindowMin:EXTENDED_WINDOW_MIN,lifecycleWindowMin:LIFECYCLE_WINDOW_MIN},
- depthSubscription:safeEvidenceClone(depthSubscription),earlyStrikes:safeEvidenceClone(earlyStrikes),turnAlerts:safeEvidenceClone(turnAlerts),signalOutcomeSummary:safeEvidenceClone(earlyOutcomeSummary()),survivors:safeEvidenceClone(survivors),executeOutcomeSummary:safeEvidenceClone(outcomeSummary()),opportunityFamilies:safeEvidenceClone(opportunityFamilies),candidates:safeEvidenceClone(candidates),evidence:safeEvidenceClone(evidence),counters:safeEvidenceClone(counters),guardian:safeEvidenceClone(SHEOL_STREAM_GUARDIAN),siphon:{lastTradeAt:SIPH.lastTradeAt,tradeAgeSec:SIPH.lastTradeAt?Math.floor((Date.now()-SIPH.lastTradeAt)/1000):null,ratioV:SIPH.ratioV,ratioN:SIPH.ratioN,buckets:SIPH.buckets?SIPH.buckets.size:0},candleCount:candles.length,note:'V41.1 preserves V41 logic and fixes Regime Governor, outcome Signal, live-price pill, Action, and Confirmation alignment. V41 separates continuation and reversal paths, uses a persistent regime governor, tracks 79m tactical / 245m extended / 360m lifecycle outcomes with retroactive visibility, freezes strike scores separately from current scores, clusters signals into opportunity families, separates execution age from price-extension risk, and treats any legacy crossing time inferred from V40 extrema as inferred rather than exact.'};}
+ depthSubscription:safeEvidenceClone(depthSubscription),earlyStrikes:safeEvidenceClone(earlyStrikes),turnAlerts:safeEvidenceClone(turnAlerts),signalOutcomeSummary:safeEvidenceClone(earlyOutcomeSummary()),survivors:safeEvidenceClone(survivors),executeOutcomeSummary:safeEvidenceClone(outcomeSummary()),opportunityFamilies:safeEvidenceClone(opportunityFamilies),candidates:safeEvidenceClone(candidates),evidence:safeEvidenceClone(evidence),counters:safeEvidenceClone(counters),guardian:safeEvidenceClone(SHEOL_STREAM_GUARDIAN),siphon:{lastTradeAt:SIPH.lastTradeAt,tradeAgeSec:SIPH.lastTradeAt?Math.floor((Date.now()-SIPH.lastTradeAt)/1000):null,ratioV:SIPH.ratioV,ratioN:SIPH.ratioN,buckets:SIPH.buckets?SIPH.buckets.size:0},candleCount:candles.length,note:'V41.6 preserves V41 logic and V41.2 ledger geometry, seals bottom overscroll/white canvas exposure, and resets refreshes to the page top. V41 separates continuation and reversal paths, uses a persistent regime governor, tracks 79m tactical / 245m extended / 360m lifecycle outcomes with retroactive visibility, freezes strike scores separately from current scores, clusters signals into opportunity families, separates execution age from price-extension risk, and treats any legacy crossing time inferred from V40 extrema as inferred rather than exact.'};}
 function evidenceJson(){return JSON.stringify(makeEvidencePayload(),null,2)}
 function setExportStatus(msg,kind){let el=E('exportStatus');if(el){el.textContent=msg;el.className='small '+(kind||'')}}
 function showExportBox(json,msg){let box=E('exportBox'),txt=E('exportText');if(txt)txt.value=json;if(box)box.classList.add('show');setExportStatus(msg||'Evidence export ready.','ok')}
