@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>VIRGO V41.6 | Bottom Scroll Seal + Refresh Top Reset</title>
+<title>VIRGO V41.7 | Candle Continuity</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 <script>
 /* V41.6 refresh-position governor: disable browser scroll restoration and force a clean top position on every load/refresh. */
@@ -159,7 +159,7 @@ body{
 </head>
 <body><div class="wrap">
 <div class="hero">
-<h1>VIRGO V41.6 DUAL-PATH REGIME LIFECYCLE ENGINE</h1>
+<h1>VIRGO V41.7 DUAL-PATH REGIME LIFECYCLE ENGINE</h1>
 <div class="sub">Purpose: preserve V40’s proven early timing while separating regime-aligned continuation from reversal formation. V41 adds BULLISH / BEARISH / TRANSITION / BALANCED governance, CONTINUATION EARLY STRIKE, EXHAUSTION WATCH → TURN ALERT, dual-horizon outcomes, opportunity-family clustering, and precise age-versus-price execution warnings.</div>
 <div class="price"><div class="px" id="price">—</div><span class="pill" id="feedState">CONNECTING</span></div>
 <div class="small liveMeta" id="lastSeen">Waiting for live feed…</div>
@@ -186,7 +186,7 @@ body{
 <div class="section"><div class="sectionTitle">Top-20 Suspect Board</div><table class="table"><thead><tr><th>#</th><th>Dir</th><th>Age</th><th>Path / Stage</th><th>Evidence</th></tr></thead><tbody id="suspectBody"><tr><td colspan="5" class="small">No suspects yet.</td></tr></tbody></table></div>
 <div class="section"><div class="sectionTitle">Non-Survivor Taxonomy Counters</div><div class="grid"><div class="card"><h2>Duplicate Fragment</h2><div class="big" id="cDup">0</div></div><div class="card"><h2>No Runway</h2><div class="big" id="cRunway">0</div></div><div class="card"><h2>Late Exhaustion</h2><div class="big" id="cLate">0</div></div><div class="card"><h2>Depth / Flow Bait</h2><div class="big" id="cBait">0</div></div><div class="card"><h2>Stale Survivor Kill</h2><div class="big" id="cStale">0</div><div class="small">Age &gt; 79m cannot execute.</div></div></div></div>
 <div class="section"><div class="sectionTitle">Evidence Log</div><div class="log" id="log"></div></div>
-<div class="footer">VIRGO V41.6 is a live lifecycle evidence harness, not a statistically promoted execution engine. CONTINUATION EARLY STRIKE and TURN ALERT are separate early pathways. FULL EXECUTE remains the strict confirmation. Family clustering prevents multiple entries inside one broad trend from masquerading as independent survivors.</div>
+<div class="footer">VIRGO V41.7 is a live lifecycle evidence harness with persistent candle continuity, not a statistically promoted execution engine. CONTINUATION EARLY STRIKE and TURN ALERT are separate early pathways. FULL EXECUTE remains the strict confirmation. Family clustering prevents multiple entries inside one broad trend from masquerading as independent survivors.</div>
 </div>
 
 <script>
@@ -212,6 +212,17 @@ const EARLY_STRIKE_MAX_AGE_MIN=45, EARLY_STRIKE_BEST_AGE_MIN=30, EARLY_STRIKE_MA
 const EARLY_OUTCOME_TARGET_POINTS=500, EARLY_OUTCOME_FAIL_POINTS=500, TACTICAL_WINDOW_MIN=79, EXTENDED_WINDOW_MIN=245, LIFECYCLE_WINDOW_MIN=360;
 const CANDIDATE_EXPIRY_MIN=79, CANDIDATE_CAUTION_MIN=30;
 const MAX_CANDLES=5000;
+/* VIRGO V41.7 candle continuity — isolated from the attached continuity source only. */
+const VIRGO_CANDLE_STORE='VIRGO_1000PEPE_CANDLE_CONTINUITY_V1';
+const VIRGO_CANDLE_CONTINUITY_MODE='RESTORE_MERGE_DEDUPE_PROTECT_CURRENT_FLUSH_ON_HIDE';
+const VIRGO_CANDLE_BOOTSTRAP_ROUTES=[
+  'https://open-api.bingx.com/openApi/swap/v3/quote/klines?symbol=1000PEPE-USDT&interval=1m&limit=720',
+  'https://open-api.bingx.com/openApi/swap/v2/quote/klines?symbol=1000PEPE-USDT&interval=1m&limit=720',
+  'https://open-api.bingx.pro/openApi/swap/v3/quote/klines?symbol=1000PEPE-USDT&interval=1m&limit=720',
+  'https://fapi.binance.com/fapi/v1/klines?symbol=1000PEPEUSDT&interval=1m&limit=900'
+];
+let virgoCandleSealTimer=null;
+let virgoCandleContinuity={restored:0,lastSavedAt:0,lastMergedAt:0,lastBootstrapRoute:'NONE',lastError:'NONE',saveCount:0};
 let price=null,lastTs=0,lastSource='—';
 let priceStream=[], candleMap=new Map(), candles=[];
 let wsA=null, wsB=null, bingxTries=0, binanceTries=0, lastLive=0, liveSource='—';
@@ -239,18 +250,84 @@ function setFeed(s){const el=E('feedState'); if(el)el.textContent=s}
 function setStatus(s){setFeed(String(s||'—').toUpperCase().slice(0,34))}
 function setSource(s){liveSource=s; lastSource=s}
 function updateLivePrice(px,src){price=+px;lastTs=Date.now();lastSource=src||liveSource||'HADES feed';const pEl=E('price');if(pEl)pEl.textContent=fmtPx(price);const lEl=E('lastSeen');if(lEl)lEl.textContent=`${lastSource} • ${new Date().toLocaleTimeString()} • MYT ${mytDate()} • ${candles.length} bars`;evaluateLive();render()}
-function updateCurrentCandle(px,t=Date.now()){
-  let k=minuteKey(t); let c=candleMap.get(k);
-  if(!c){c={t:k,o:px,h:px,l:px,c:px,v:0,n:0,tb:0,source:'live'}; candleMap.set(k,c); candles.push(c); candles.sort((a,b)=>a.t-b.t); if(candles.length>MAX_CANDLES){let old=candles.shift(); candleMap.delete(old.t)}}
-  else{c.h=Math.max(c.h,px); c.l=Math.min(c.l,px); c.c=px; c.source='live'}
+function normalizeVirgoCandle(raw){
+  if(!raw||typeof raw!=='object')return null;
+  let rawT=+(raw.t??raw.time??raw.openTime??raw[0]);
+  if(!Number.isFinite(rawT)||rawT<=0)return null;
+  if(rawT<1e12)rawT*=1000;
+  const t=minuteKey(rawT),o=+(raw.o??raw.open??raw[1]),h=+(raw.h??raw.high??raw[2]),l=+(raw.l??raw.low??raw[3]),cl=+(raw.c??raw.close??raw[4]);
+  if(!(o>0&&h>0&&l>0&&cl>0))return null;
+  return {t,o,h:Math.max(h,o,l,cl),l:Math.min(l,o,h,cl),c:cl,v:Math.max(0,+(raw.v??raw.volume??raw[5])||0),n:Math.max(0,+(raw.n??raw.trades??raw[8])||0),tb:Math.max(0,+(raw.tb??raw.takerBuy??raw[9])||0),source:String(raw.source||'continuity')};
 }
-function rebuildCandlesFromKlines(data){
-  candleMap.clear(); candles=[]; priceStream=[];
-  for(const c of data){let t=+c[0], o=+c[1], h=+c[2], l=+c[3], cl=+c[4]; if(!(cl>0))continue; let k=minuteKey(t); let obj={t:k,o,h,l,c:cl,v:+c[5]||0,n:+c[8]||0,tb:+c[9]||0,source:'bootstrap'}; candleMap.set(k,obj); candles.push(obj); priceStream.push({t:k+59000,px:cl})}
-  candles.sort((a,b)=>a.t-b.t); priceStream=priceStream.slice(-2000);
+function normalizeVirgoCandleList(arr){
+  const map=new Map();
+  for(const raw of Array.isArray(arr)?arr:[]){
+    const c=normalizeVirgoCandle(raw);if(!c)continue;
+    const old=map.get(c.t);
+    if(!old)map.set(c.t,c);
+    else map.set(c.t,{t:c.t,o:old.o,h:Math.max(old.h,c.h),l:Math.min(old.l,c.l),c:c.c,v:Math.max(old.v,c.v),n:Math.max(old.n,c.n),tb:Math.max(old.tb,c.tb),source:c.source||old.source});
+  }
+  return [...map.values()].sort((a,b)=>a.t-b.t).slice(-MAX_CANDLES);
+}
+function applyVirgoCandleList(list,rebuildTape=false){
+  candles=normalizeVirgoCandleList(list);
+  candleMap=new Map(candles.map(c=>[c.t,c]));
+  if(rebuildTape)priceStream=candles.slice(-2000).map(c=>({t:c.t+59000,px:c.c}));
+  return candles;
+}
+function mergeVirgoCandleHistory(retained,bootstrap){
+  const currentT=minuteKey(Date.now()),liveT=lastLive?minuteKey(lastLive):0;
+  const oldMap=new Map(normalizeVirgoCandleList(retained).map(c=>[c.t,c]));
+  const bootMap=new Map(normalizeVirgoCandleList(bootstrap).map(c=>[c.t,c]));
+  const times=[...new Set([...oldMap.keys(),...bootMap.keys()])].sort((a,b)=>a-b),merged=[];
+  for(const t of times){
+    const old=oldMap.get(t),boot=bootMap.get(t);
+    if(!old){merged.push(boot);continue}
+    if(!boot){merged.push(old);continue}
+    const isCurrent=t===currentT,hasFreshLive=isCurrent&&liveT===t&&price>0;
+    merged.push({t,o:boot.o||old.o,h:Math.max(old.h,boot.h,hasFreshLive?price:0),l:Math.min(old.l,boot.l,hasFreshLive?price:Infinity),c:hasFreshLive?price:(isCurrent?old.c:boot.c),v:Math.max(old.v,boot.v),n:Math.max(old.n,boot.n),tb:Math.max(old.tb,boot.tb),source:hasFreshLive?'live':(isCurrent?'retained-current':'bootstrap-merged')});
+  }
+  return normalizeVirgoCandleList(merged);
+}
+function sealVirgoCandlesNow(reason='manual'){
+  try{
+    if(virgoCandleSealTimer){clearTimeout(virgoCandleSealTimer);virgoCandleSealTimer=null}
+    applyVirgoCandleList(candles,false);
+    localStorage.setItem(VIRGO_CANDLE_STORE,JSON.stringify(candles));
+    virgoCandleContinuity.lastSavedAt=Date.now();virgoCandleContinuity.saveCount++;virgoCandleContinuity.lastError='NONE';
+    return true;
+  }catch(e){virgoCandleContinuity.lastError='save: '+(e&&e.message?e.message:String(e));if(reason!=='tick')log('VIRGO candle continuity save unavailable',{reason,error:virgoCandleContinuity.lastError});return false}
+}
+function queueVirgoCandleSeal(){
+  if(virgoCandleSealTimer)return;
+  virgoCandleSealTimer=setTimeout(()=>sealVirgoCandlesNow('tick'),900);
+}
+function restoreVirgoCandles(){
+  try{
+    const arr=JSON.parse(localStorage.getItem(VIRGO_CANDLE_STORE)||'[]');
+    if(Array.isArray(arr)&&arr.length){
+      applyVirgoCandleList(arr,true);virgoCandleContinuity.restored=candles.length;virgoCandleContinuity.lastError='NONE';
+      if(!price&&candles.length){price=candles[candles.length-1].c;lastSource='VIRGO candle memory'}
+      log('restored VIRGO candle continuity',{bars:candles.length,store:VIRGO_CANDLE_STORE});
+    }
+  }catch(e){virgoCandleContinuity.lastError='restore: '+(e&&e.message?e.message:String(e));log('VIRGO candle continuity restore unavailable',{error:virgoCandleContinuity.lastError})}
+}
+function fetchVirgoCandleJson(url,ms=5500){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),ms);
+  return fetch(url,{cache:'no-store',signal:controller.signal}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).finally(()=>clearTimeout(timer));
+}
+function parseVirgoBootstrapPayload(payload){
+  const data=Array.isArray(payload)?payload:(payload&&Array.isArray(payload.data)?payload.data:[]);
+  return normalizeVirgoCandleList(data.map(k=>Array.isArray(k)?{t:k[0],o:k[1],h:k[2],l:k[3],c:k[4],v:k[5],n:k[8],tb:k[9],source:'bootstrap'}:{t:k.time??k.openTime??k.t,o:k.open??k.o,h:k.high??k.h,l:k.low??k.l,c:k.close??k.c,v:k.volume??k.v,n:k.trades??k.n,tb:k.takerBuy??k.tb,source:'bootstrap'}));
+}
+function updateCurrentCandle(px,t=Date.now()){
+  const k=minuteKey(t);let c=candleMap.get(k);
+  if(!c){const prev=candles.length?+candles[candles.length-1].c:px;c={t:k,o:prev,h:Math.max(prev,px),l:Math.min(prev,px),c:px,v:0,n:0,tb:0,source:'live'};candleMap.set(k,c);candles.push(c);candles.sort((a,b)=>a.t-b.t);if(candles.length>MAX_CANDLES){const old=candles.shift();candleMap.delete(old.t)}}
+  else{c.h=Math.max(+c.h,px);c.l=Math.min(+c.l,px);c.c=px;c.source='live'}
+  queueVirgoCandleSeal();
 }
 function pushPrice(px,hi,lo){
-  px=parseFloat(px); if(!(px>0))return; lastLive=Date.now(); priceStream.push({t:lastLive,px}); if(priceStream.length>3000)priceStream.shift(); updateCurrentCandle(px,lastLive); updateLivePrice(px,liveSource||'HADES feed');
+  px=parseFloat(px);if(!(px>0))return;lastLive=Date.now();priceStream.push({t:lastLive,px});if(priceStream.length>3000)priceStream.shift();updateCurrentCandle(px,lastLive);updateLivePrice(px,liveSource||'HADES feed');
 }
 async function gunzip(ab){
   if(typeof ab==='string')return ab;
@@ -398,8 +475,22 @@ function connectBingX(){
   ws.onerror=function(){sheolStreamError('BingX WS error'); try{ws.close()}catch(e){}};
 }
 async function bootstrapHistory(){
-  try{setStatus('loading 1m bootstrap…'); let r=await fetch('https://fapi.binance.com/fapi/v1/klines?symbol=1000PEPEUSDT&interval=1m&limit=900',{cache:'no-store'}); let data=await r.json(); if(Array.isArray(data)){rebuildCandlesFromKlines(data); if(candles.length){let last=candles[candles.length-1]; updateLivePrice(last.c,'VIRGO bootstrap'); setStatus('bootstrap loaded · opening feed'); log('bootstrap loaded',{bars:candles.length})}}}
-  catch(e){setStatus('bootstrap failed · opening feed'); log('bootstrap failed',{error:e.message})}
+  setStatus('merging retained + 1m bootstrap…');
+  let loaded=false;
+  for(const url of VIRGO_CANDLE_BOOTSTRAP_ROUTES){
+    try{
+      const payload=await fetchVirgoCandleJson(url,5500),parsed=parseVirgoBootstrapPayload(payload);
+      if(!parsed.length)continue;
+      const retainedCount=candles.length,currentT=minuteKey(Date.now()),hadCurrent=candles.some(c=>c.t===currentT);
+      applyVirgoCandleList(mergeVirgoCandleHistory(candles,parsed),true);
+      virgoCandleContinuity.lastMergedAt=Date.now();virgoCandleContinuity.lastBootstrapRoute=url.includes('bingx')?'BINGX_REST':'BINANCE_REST';virgoCandleContinuity.lastError='NONE';
+      sealVirgoCandlesNow('bootstrap merge');
+      if(candles.length){const last=candles[candles.length-1];updateLivePrice(last.c,'VIRGO continuity bootstrap');setStatus('candle continuity merged · opening feed');log('VIRGO candle continuity merged',{bootstrapBars:parsed.length,retainedBars:retainedCount,totalBars:candles.length,currentMinutePreserved:hadCurrent&&candles.some(c=>c.t===currentT),route:virgoCandleContinuity.lastBootstrapRoute})}
+      loaded=true;break;
+    }catch(e){virgoCandleContinuity.lastError=(e&&e.name==='AbortError'?'timeout: ':'route unavailable: ')+(e&&e.message?e.message:String(e));log('VIRGO candle continuity route skipped',{route:url.includes('bingx')?'BINGX_REST':'BINANCE_REST',error:virgoCandleContinuity.lastError})}
+  }
+  if(!loaded){setStatus(candles.length?'retained candles authoritative · opening feed':'bootstrap unavailable · opening feed');log('VIRGO candle bootstrap unavailable',{retainedBars:candles.length,error:virgoCandleContinuity.lastError})}
+  return loaded;
 }
 function sync(){bingxTries=0;binanceTries=0;lastLive=0;closeSockets();setStatus('syncing…');bootstrapHistory().finally(()=>{connectBingX(); startSheolRestPulse(); startSheolStreamWatchdog()})}
 function addTrade(p,q,isSell,tt){
@@ -420,7 +511,7 @@ function connectSiphon(){
   ws.onerror=function(){try{ws.close()}catch(e){}};
 }
 setInterval(()=>{const fresh=Date.now()-SIPH.lastTradeAt<20000; const b=SIPH.buckets.get(minuteKey(Date.now())); const extra=fresh?` · siphon ${b?b.n:0}tr`:''; if(lastLive&&Date.now()-lastLive<20000)setStatus((liveSource||'LIVE')+extra);},5000);
-function startAll(){setStatus('CONNECTING'); log('VIRGO V41 dual-path regime lifecycle start',{target:'min4 independent survivor families',feed:'HADES price/trade stack + isolated BingX depth20 authority',rule:'Regime-aligned CONTINUATION EARLY STRIKE; counter-regime EXHAUSTION WATCH → TURN ALERT; FULL EXECUTE remains second-punch strict; 79m/245m/lifecycle outcomes tracked separately'}); sync(); try{if(SIPH.ws){SIPH.ws.onclose=null;SIPH.ws.close()}}catch(e){} SIPH.ws=null; SIPH.tries=0; connectSiphon()}
+function startAll(){setStatus('CONNECTING'); log('VIRGO V41.7 dual-path regime lifecycle + candle continuity start',{target:'min4 independent survivor families',feed:'HADES price/trade stack + isolated BingX depth20 authority',rule:'Regime-aligned CONTINUATION EARLY STRIKE; counter-regime EXHAUSTION WATCH → TURN ALERT; FULL EXECUTE remains second-punch strict; 79m/245m/lifecycle outcomes tracked separately'}); sync(); try{if(SIPH.ws){SIPH.ws.onclose=null;SIPH.ws.close()}}catch(e){} SIPH.ws=null; SIPH.tries=0; connectSiphon()}
 function hadesWake(why){
   const now=Date.now(); if(now-lastWakeAt<3000)return; lastWakeAt=now;
   const age=Date.now()-(lastLive||0); setStatus('resyncing '+why+'…');
@@ -623,12 +714,12 @@ function render(){
 function safeEvidenceClone(obj){
   try{return JSON.parse(JSON.stringify(obj))}catch(e){return String(obj)}
 }
-function evidenceFilename(){return `virgo_v41_6_dual_path_regime_lifecycle_evidence_${Date.now()}.json`}
+function evidenceFilename(){return `virgo_v41_7_candle_continuity_evidence_${Date.now()}.json`}
 function makeEvidencePayload(){updateFamilyMetrics();return {
- engine:'VIRGO_500_V41_6_BOTTOM_SCROLL_REFRESH_TOP_FIX',created:nowIso(),symbol:'1000PEPEUSDT',feed:'HADES vMaster price/trade stack + isolated OMEN BingX depth20 authority only',depthChannel:BINGX_DEPTH_CHANNEL,depthState:safeEvidenceClone(depthState),lastDepthAt,lastDepthAgeSec:lastDepthAt?Math.floor((Date.now()-lastDepthAt)/1000):null,livePrice:price,lastSource,lastTickAt:lastTs,cycleDay:mytDate(),
+ engine:'VIRGO_500_V41_7_CANDLE_CONTINUITY',created:nowIso(),symbol:'1000PEPEUSDT',feed:'HADES vMaster price/trade stack + isolated OMEN BingX depth20 authority only',depthChannel:BINGX_DEPTH_CHANNEL,depthState:safeEvidenceClone(depthState),lastDepthAt,lastDepthAgeSec:lastDepthAt?Math.floor((Date.now()-lastDepthAt)/1000):null,livePrice:price,lastSource,lastTickAt:lastTs,cycleDay:mytDate(),
  regimeState:safeEvidenceClone(regimeState),survivorCountToday:survivors.filter(x=>x.date===mytDate()).length,opportunityFamilyCountToday:opportunityFamilies.filter(x=>x.date===mytDate()).length,continuationStrikeCountToday:earlyStrikes.filter(x=>x.date===mytDate()).length,turnAlertCountToday:turnAlerts.filter(x=>x.date===mytDate()).length,
  rules:{continuation:'Regime aligned + score >=70 + aligned flow floor + survival + 12s persistence + age<=45m + move 20..175pt',reversal:'Counter-regime exhaustion watch >=58; turn alert >=72 with exhaustion/location plus flow or depth flip and 12s persistence',fullExecute:'impact + second punch + siphon + survival + independence + no poison + age<=79m',tacticalWindowMin:TACTICAL_WINDOW_MIN,extendedWindowMin:EXTENDED_WINDOW_MIN,lifecycleWindowMin:LIFECYCLE_WINDOW_MIN},
- depthSubscription:safeEvidenceClone(depthSubscription),earlyStrikes:safeEvidenceClone(earlyStrikes),turnAlerts:safeEvidenceClone(turnAlerts),signalOutcomeSummary:safeEvidenceClone(earlyOutcomeSummary()),survivors:safeEvidenceClone(survivors),executeOutcomeSummary:safeEvidenceClone(outcomeSummary()),opportunityFamilies:safeEvidenceClone(opportunityFamilies),candidates:safeEvidenceClone(candidates),evidence:safeEvidenceClone(evidence),counters:safeEvidenceClone(counters),guardian:safeEvidenceClone(SHEOL_STREAM_GUARDIAN),siphon:{lastTradeAt:SIPH.lastTradeAt,tradeAgeSec:SIPH.lastTradeAt?Math.floor((Date.now()-SIPH.lastTradeAt)/1000):null,ratioV:SIPH.ratioV,ratioN:SIPH.ratioN,buckets:SIPH.buckets?SIPH.buckets.size:0},candleCount:candles.length,note:'V41.6 preserves V41 logic and V41.2 ledger geometry, seals bottom overscroll/white canvas exposure, and resets refreshes to the page top. V41 separates continuation and reversal paths, uses a persistent regime governor, tracks 79m tactical / 245m extended / 360m lifecycle outcomes with retroactive visibility, freezes strike scores separately from current scores, clusters signals into opportunity families, separates execution age from price-extension risk, and treats any legacy crossing time inferred from V40 extrema as inferred rather than exact.'};}
+ depthSubscription:safeEvidenceClone(depthSubscription),earlyStrikes:safeEvidenceClone(earlyStrikes),turnAlerts:safeEvidenceClone(turnAlerts),signalOutcomeSummary:safeEvidenceClone(earlyOutcomeSummary()),survivors:safeEvidenceClone(survivors),executeOutcomeSummary:safeEvidenceClone(outcomeSummary()),opportunityFamilies:safeEvidenceClone(opportunityFamilies),candidates:safeEvidenceClone(candidates),evidence:safeEvidenceClone(evidence),counters:safeEvidenceClone(counters),guardian:safeEvidenceClone(SHEOL_STREAM_GUARDIAN),siphon:{lastTradeAt:SIPH.lastTradeAt,tradeAgeSec:SIPH.lastTradeAt?Math.floor((Date.now()-SIPH.lastTradeAt)/1000):null,ratioV:SIPH.ratioV,ratioN:SIPH.ratioN,buckets:SIPH.buckets?SIPH.buckets.size:0},candleCount:candles.length,candleContinuity:{mode:VIRGO_CANDLE_CONTINUITY_MODE,store:VIRGO_CANDLE_STORE,retainedBars:candles.length,restoredBars:virgoCandleContinuity.restored,lastSavedAt:virgoCandleContinuity.lastSavedAt,lastMergedAt:virgoCandleContinuity.lastMergedAt,lastBootstrapRoute:virgoCandleContinuity.lastBootstrapRoute,lastError:virgoCandleContinuity.lastError,saveCount:virgoCandleContinuity.saveCount},note:'V41.7 preserves V41.6 UI and engine logic and adds only VIRGO candle continuity: local restore, normalization, merge, deduplication, current-minute protection, bounded pruning, REST fallback bootstrap, and flush-on-hide/unload.'};}
 function evidenceJson(){return JSON.stringify(makeEvidencePayload(),null,2)}
 function setExportStatus(msg,kind){let el=E('exportStatus');if(el){el.textContent=msg;el.className='small '+(kind||'')}}
 function showExportBox(json,msg){let box=E('exportBox'),txt=E('exportText');if(txt)txt.value=json;if(box)box.classList.add('show');setExportStatus(msg||'Evidence export ready.','ok')}
@@ -684,6 +775,11 @@ function clearSession(){candidates=[];earlyStrikes=[];turnAlerts=[];survivors=[]
 setInterval(()=>{if(lastTs&&Date.now()-lastTs>15000)setStatus('STALE / RECONNECT')},5000);
 setInterval(()=>{try{localStorage.setItem('virgo_v41_dual_path_regime_lifecycle',JSON.stringify({survivors,earlyStrikes,turnAlerts,opportunityFamilies,candidates,evidence,counters,regimeState}))}catch(e){}},10000);
 try{let saved=JSON.parse(localStorage.getItem('virgo_v41_dual_path_regime_lifecycle')||'null'),legacy=false;if(!saved){saved=JSON.parse(localStorage.getItem('virgo_v40_early_strike_evidence')||'null');legacy=!!saved;}if(saved){survivors=saved.survivors||[];earlyStrikes=saved.earlyStrikes||[];turnAlerts=saved.turnAlerts||[];opportunityFamilies=saved.opportunityFamilies||[];candidates=saved.candidates||[];evidence=saved.evidence||[];regimeState={...regimeState,...(saved.regimeState||{})};counters={duplicate:0,runway:0,late:0,bait:0,stale:0,targetHit:0,failedFirst:0,weakFollow:0,earlyStrike:0,turnAlert:0,exhaustionWatch:0,earlyTargetHit:0,earlyFailedFirst:0,earlyWeak:0,regimeFlip:0,...(saved.counters||{})};if(legacy){for(const x of earlyStrikes){x.signalPath=x.signalPath||'LEGACY_EARLY';x.strikeScore=x.strikeScore??x.earlyScore;x.currentScore=x.currentScore??x.earlyScore;attachFamily(x,'LEGACY_EARLY','strikeTime','strikePrice');}for(const x of survivors){x.signalPath=x.signalPath||'LEGACY_EXECUTE';attachExecuteFamily(x);}log('migrated V40 local evidence into V41',{earlyStrikes:earlyStrikes.length,survivors:survivors.length});}else log('restored V41 local evidence')}}catch(e){log('restore failed',{error:e.message})}
+function sealVirgoCandleContinuity(reason){sealVirgoCandlesNow(reason)}
+window.addEventListener('pagehide',()=>sealVirgoCandleContinuity('pagehide'));
+window.addEventListener('beforeunload',()=>sealVirgoCandleContinuity('beforeunload'));
+document.addEventListener('visibilitychange',()=>{if(document.hidden){sealVirgoCandleContinuity('hidden');log('VIRGO candle memory sealed',{bars:candles.length})}});
+restoreVirgoCandles();
 wireEvidenceExportButtons();startAll();render();setInterval(render,1000);
 </script>
 </body></html>
